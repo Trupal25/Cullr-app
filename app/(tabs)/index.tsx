@@ -1,98 +1,194 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React from 'react';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { MaterialIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
+import { Header } from '../../src/components/header';
+import { BottomNav } from '../../src/components/bottom-nav';
+import { Colors } from '../../src/theme';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+export default function ScanHomeScreen(): React.JSX.Element {
+  const router = useRouter();
+  const pulseScale = useSharedValue(1);
 
-export default function HomeScreen() {
+  React.useEffect(() => {
+    pulseScale.value = withRepeat(
+      withTiming(1.15, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
+      -1,
+      true
+    );
+  }, [pulseScale]);
+
+  const pulseStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulseScale.value }],
+    opacity: 2 - pulseScale.value,
+  }));
+
+  const handleScan = (): void => {
+    router.push('/(tabs)/results');
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
+      <Header />
+      <View style={styles.content}>
+        {/* Gallery Intelligence Label */}
+        <View style={styles.labelSection}>
+          <Text style={styles.intelligenceLabel}>Gallery Intelligence</Text>
+          <View style={styles.labelDivider} />
+        </View>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+        {/* Central Scanner UI */}
+        <View style={styles.scannerSection}>
+          <Pressable
+            onPress={handleScan}
+            style={({ pressed }) => [
+              styles.scanButton,
+              pressed && styles.scanButtonPressed,
+            ]}
+          >
+            <Animated.View style={[styles.pulseRing, pulseStyle]} />
+            <MaterialIcons name="photo-camera" size={36} color={Colors.primaryContainer} />
+          </Pressable>
+
+          <View style={styles.scanTextContainer}>
+            <Text style={styles.scanTitle}>Scan Gallery</Text>
+            <Text style={styles.scanSubtitle}>
+              Analyzes metadata{' '}
+              <Text style={styles.scanDot}>·</Text>
+              {' '}Never uploads your photos
+            </Text>
+          </View>
+        </View>
+
+        {/* Activity Feed Chip */}
+        <View style={styles.activityChip}>
+          <MaterialIcons name="history" size={18} color={Colors.textMuted} />
+          <Text style={styles.activityText}>
+            Last scan: 3 days ago{' '}
+            <Text style={styles.activityDot}>•</Text>
+            {' '}14 images deleted
+          </Text>
+        </View>
+      </View>
+      <BottomNav activeTab="home" />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  safeArea: {
+    flex: 1,
+    backgroundColor: Colors.bgBase,
   },
-  stepContainer: {
-    gap: 8,
+  content: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+
+  // Label Section
+  labelSection: {
+    alignItems: 'center',
+    marginBottom: 60,
+  },
+  intelligenceLabel: {
+    fontFamily: 'SpaceGrotesk_400Regular',
+    fontSize: 10,
+    letterSpacing: 3,
+    textTransform: 'uppercase',
+    color: Colors.textSecondary,
     marginBottom: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
+  labelDivider: {
+    width: 32,
+    height: 1,
+    backgroundColor: Colors.surfaceContainerHighest,
+  },
+
+  // Scanner Section
+  scannerSection: {
+    alignItems: 'center',
+    gap: 36,
+  },
+  scanButton: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: Colors.bgSurface,
+    borderWidth: 1,
+    borderColor: 'rgba(62, 207, 191, 0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#3ECFBF',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.08,
+    shadowRadius: 40,
+    elevation: 4,
+  },
+  scanButtonPressed: {
+    transform: [{ scale: 0.95 }],
+  },
+  pulseRing: {
     position: 'absolute',
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    borderWidth: 1,
+    borderColor: 'rgba(62, 207, 191, 0.1)',
+  },
+  scanTextContainer: {
+    alignItems: 'center',
+  },
+  scanTitle: {
+    fontFamily: 'Inter_500Medium',
+    fontSize: 18,
+    color: Colors.textPrimary,
+    marginBottom: 8,
+  },
+  scanSubtitle: {
+    fontFamily: 'SpaceGrotesk_400Regular',
+    fontSize: 11,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+    color: Colors.textDark,
+    textAlign: 'center',
+    lineHeight: 18,
+    maxWidth: 240,
+  },
+  scanDot: {
+    opacity: 0.4,
+  },
+
+  // Activity Chip
+  activityChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    backgroundColor: Colors.bgSurface,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 8,
+    marginTop: 72,
+  },
+  activityText: {
+    fontFamily: 'SpaceGrotesk_400Regular',
+    fontSize: 11,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: Colors.textMuted,
+  },
+  activityDot: {
+    color: Colors.textDark,
   },
 });
