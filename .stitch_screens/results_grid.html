@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>cullr - Results Grid</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600&amp;family=Geist+Mono:wght@300;400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "on-tertiary": "#103633",
+            "on-error-container": "#ffdad6",
+            "surface-variant": "#313635",
+            "on-tertiary-fixed-variant": "#294d4a",
+            "inverse-surface": "#e0e3e2",
+            "on-primary-container": "#00544d",
+            "on-background": "#e0e3e2",
+            "secondary": "#a8cecb",
+            "on-error": "#690005",
+            "primary-fixed": "#70f8e7",
+            "secondary-fixed": "#c4eae7",
+            "surface-dim": "#101414",
+            "primary-container": "#3ecfbf",
+            "on-surface-variant": "#bbcac6",
+            "on-tertiary-container": "#2c514d",
+            "inverse-on-surface": "#2d3131",
+            "surface-tint": "#4edbcb",
+            "surface-container-lowest": "#0b0f0f",
+            "on-surface": "#e0e3e2",
+            "error-container": "#93000a",
+            "tertiary-fixed-dim": "#a8cec9",
+            "on-primary-fixed": "#00201d",
+            "primary-fixed-dim": "#4edbcb",
+            "outline": "#859490",
+            "background": "#101414",
+            "tertiary-container": "#9cc2be",
+            "on-primary-fixed-variant": "#005049",
+            "secondary-fixed-dim": "#a8cecb",
+            "on-secondary-fixed-variant": "#294d4b",
+            "surface-container": "#1c2020",
+            "surface-container-low": "#181c1c",
+            "on-primary": "#003732",
+            "surface": "#101414",
+            "surface-bright": "#363a3a",
+            "on-secondary-fixed": "#00201f",
+            "on-secondary-container": "#97bcba",
+            "tertiary-fixed": "#c3eae5",
+            "on-secondary": "#103635",
+            "outline-variant": "#3c4947",
+            "error": "#ffb4ab",
+            "surface-container-high": "#272b2b",
+            "primary": "#62ecdb",
+            "tertiary": "#b7ded9",
+            "on-tertiary-fixed": "#00201e",
+            "secondary-container": "#294d4b",
+            "surface-container-highest": "#313635",
+            "inverse-primary": "#006a61"
+          },
+          fontFamily: {
+            "headline": ["Space Grotesk"],
+            "body": ["Inter"],
+            "label": ["Space Grotesk"],
+            "mono": ["Geist Mono"]
+          },
+          borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      line-height: 1;
+      text-transform: none;
+      letter-spacing: normal;
+      word-wrap: normal;
+      white-space: nowrap;
+      direction: ltr;
+    }
+    body {
+      background-color: #101414;
+      color: #e0e3e2;
+      font-family: 'Inter', sans-serif;
+    }
+    .surgical-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+    }
+    .cell-ratio {
+      aspect-ratio: 1 / 1;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background min-h-screen flex flex-col">
+<!-- TopAppBar from JSON -->
+<nav class="flex items-center justify-between px-6 h-16 w-full docked full-width top-0 bg-[#101414] dark:bg-[#101414] border-b border-[#313635]/30 z-50">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-[#62ecdb] cursor-pointer" data-icon="menu">menu</span>
+<h1 class="font-['Space_Grotesk'] lowercase tracking-tighter text-xl text-[#62ecdb]">cullr</h1>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-[#97bcba] hover:text-[#62ecdb] transition-colors cursor-pointer" data-icon="search">search</span>
+</div>
+</nav>
+<!-- Summary Strip -->
+<header class="bg-[#0E1414] px-4 py-6 flex flex-col gap-1">
+<h2 class="text-[#EFF6F5] text-xl font-headline font-medium">18 spam images</h2>
+<p class="text-[#6B8F8D] font-mono text-[10px] uppercase tracking-widest">142 MB · tap to select</p>
+</header>
+<!-- Filters -->
+<section class="px-4 py-4 flex gap-2 overflow-x-auto no-scrollbar">
+<button class="px-5 py-1.5 rounded-full bg-[#3ECFBF] text-[#080C0C] font-mono text-[10px] uppercase tracking-widest font-bold">All</button>
+<button class="px-5 py-1.5 rounded-full bg-[#0E1414] text-[#6B8F8D] border border-[#1E2E2D] font-mono text-[10px] uppercase tracking-widest hover:border-primary/40 transition-colors">High</button>
+<button class="px-5 py-1.5 rounded-full bg-[#0E1414] text-[#6B8F8D] border border-[#1E2E2D] font-mono text-[10px] uppercase tracking-widest hover:border-primary/40 transition-colors">Medium</button>
+<button class="px-5 py-1.5 rounded-full bg-[#0E1414] text-[#6B8F8D] border border-[#1E2E2D] font-mono text-[10px] uppercase tracking-widest hover:border-primary/40 transition-colors">Low</button>
+</section>
+<!-- Results Grid -->
+<main class="flex-grow pb-32">
+<div class="surgical-grid px-0.5">
+<!-- Item 1 (Selected) -->
+<div class="relative cell-ratio bg-[#0E1414] border border-[#1E2E2D] group cursor-pointer overflow-hidden ring-1.5 ring-inset ring-[#3ECFBF]">
+<img class="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" data-alt="Dark abstract screenshot of a notification" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC1GoS5eCN3kHcFWiV6BJJc7r1Z6TPAG1_hzGNq8FfTlHkyqNdONSfETFYzvk6yTidIvINwhYA48Ha79veziHihkrZEfn786oMy0nUj45GbY5oq8qrPUoxauxE6QMuh9fUBeB3N3djcSH0ApPGfDtC8CNuxkfae8ierPegUucyDkbbQyy9oytYrn3qK7Kuj8PJsd-RBPJMmTVxPLR0GiIRpYJNomLZWQA5JSB0zf3XNbVX_Gf0v_0CTdkKJA6ybbFgqbwlHwFf4rLQ"/>
+<!-- Badge -->
+<div class="absolute top-1.5 right-1.5 px-1.5 py-0.5 bg-[#E05C5C] text-white font-mono text-[9px] uppercase tracking-tighter">High</div>
+<!-- Selection Overlay -->
+<div class="absolute inset-0 bg-primary/10"></div>
+<div class="absolute bottom-1.5 right-1.5 w-5 h-5 bg-[#3ECFBF] flex items-center justify-center rounded-sm shadow-lg">
+<span class="material-symbols-outlined text-[#080C0C] text-sm" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="relative cell-ratio bg-[#0E1414] border border-[#1E2E2D] group cursor-pointer overflow-hidden">
+<img class="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500" data-alt="Low resolution meme image texture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBR9OrgvlMF84qrjiycr9n4tqALgoa8XpVpaQ1ov0hi4zb1kIRE89PkxTtxbFhpgjpe0toQHpr6QVWPF7zgKPzdAT5Mm-fIO-Onf-oyvKokSiryM_7VSB-8DU8SLRkdWZNn6oJfT8yFrAQ8VboFP7sQ5pgxpmLcHunL3dXEaNFHI8TaGeLCoqTXcXV8ebapbHuVViJhxSHy8OHpCol1pNi5ZKA-d8MuuGMpEoxlxH7S_7zguzs_1Wq19txypOAmpOKVA5xbnIHsNoM"/>
+<div class="absolute top-1.5 right-1.5 px-1.5 py-0.5 bg-[#C4854A] text-white font-mono text-[9px] uppercase tracking-tighter">Medium</div>
+</div>
+<!-- Item 3 (Selected) -->
+<div class="relative cell-ratio bg-[#0E1414] border border-[#1E2E2D] group cursor-pointer overflow-hidden ring-1.5 ring-inset ring-[#3ECFBF]">
+<img class="w-full h-full object-cover opacity-80" data-alt="Abstract blurry pattern of colors" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBV410zWVIptDvT-geD9nPiY1dz_qqK8RZJMaia2CXm0sfMUG5WiSEJpYMtDpHkqwEpoXnZW4ABOhztnW2gGEjD8r2b3Es5Zof56tWA4aw7P0HODwIOIgfdLQO7q5y_mm6q1E86iaOUwDAl6L2DuBKpmxxs2kFPLRPwlVOXpTEXrjwiNczPgcQOccx4AHE9C8crsoJkr4JOe32w5HN0SQC05dVUjQI5dECeoYv-qb6aWm85ukJkpH81CBKgILT5cAv3Lv6aZ40j1ng"/>
+<div class="absolute top-1.5 right-1.5 px-1.5 py-0.5 bg-[#E05C5C] text-white font-mono text-[9px] uppercase tracking-tighter">High</div>
+<div class="absolute bottom-1.5 right-1.5 w-5 h-5 bg-[#3ECFBF] flex items-center justify-center rounded-sm">
+<span class="material-symbols-outlined text-[#080C0C] text-sm" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+</div>
+<!-- Item 4 -->
+<div class="relative cell-ratio bg-[#0E1414] border border-[#1E2E2D] group cursor-pointer overflow-hidden">
+<img class="w-full h-full object-cover opacity-60" data-alt="Minimalist grey and white geometric shape" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_7cwEpk4JGqEeA3e3klQsX_SjjZ-TI5AKv5ljM3V1y0y5hjQ9SF0uIRrh9NUrz-6WIZqq0YvGZTICUgrWeu4CmB9QOb2GiH_O1B5BMHvAgmeaOk02M-gIwST8FLBx4VQFPRjRQdJGkWbYwvL5FoTCHwbAfthMZeyX-obdDVcpTeLgyjFHCAy-hw96Nst9dqvhwA-HVdRqFu12fMXBlrvuEvAbKXmQxwmEoR1cK5MaNDpP41D9PT3XslZ0FMWPoOgCAyewuKru1T8"/>
+<div class="absolute top-1.5 right-1.5 px-1.5 py-0.5 bg-[#C4854A] text-white font-mono text-[9px] uppercase tracking-tighter">Medium</div>
+</div>
+<!-- Item 5 -->
+<div class="relative cell-ratio bg-[#0E1414] border border-[#1E2E2D] group cursor-pointer overflow-hidden">
+<img class="w-full h-full object-cover opacity-60" data-alt="Dark aesthetic gradient with micro noise" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAc25KjTX6sCAdUVbo6EfSqU59qS-tdm-pR6RxmHUnfXWvgXOdh_I2bxEcCjOKS3NISp6oz5_V7gsomRqyxXon5y0s57kFyxNR4ayvcqGgujAnG29dGqQjYFCNRCkv_NVNSFl5fITqe_tATAwL3enOzPRmPx8kRhjHfyZ9ktioWbmJ7JqA9H_9qlitblMz8xQfX7AMnbFzNHwmK78Xz7Q7xs0naSfxtcFYVxhQbfgb_vkzLIKr7dq0ZyNUN20WHtk-yW2Pj_w306Rg"/>
+</div>
+<!-- Item 6 (Selected) -->
+<div class="relative cell-ratio bg-[#0E1414] border border-[#1E2E2D] group cursor-pointer overflow-hidden ring-1.5 ring-inset ring-[#3ECFBF]">
+<img class="w-full h-full object-cover opacity-80" data-alt="Abstract code snippets on screen" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDxMkBheZKI0Jzx3h3u_CTiOB5bpF3STsAHQSVWLv0Dc2WbjgWZvOpQdgK3nspwvGnCNehGvYme3QYBGOqzORj_hPX5eGE0No7u5DIc1u3UYEdmFje9bfHf1gcZhbMg06SJ5xhLRSC9NLrXZepxFa17xQhaSGHByeAI2r4hkNq4dhY0UrCG4dIQLMvwpX6ETPJ6twIDJxGF0_i7SMAU-dGyZqHYtZhy6lh1et7EPeOJ7dSywgKQhVsS7nxr91Wr97dWSS3YDilmQH8"/>
+<div class="absolute bottom-1.5 right-1.5 w-5 h-5 bg-[#3ECFBF] flex items-center justify-center rounded-sm">
+<span class="material-symbols-outlined text-[#080C0C] text-sm" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+</div>
+<!-- Row 3 Repeat for Visual Depth -->
+<div class="relative cell-ratio bg-[#0E1414] border border-[#1E2E2D] group cursor-pointer overflow-hidden">
+<img class="w-full h-full object-cover opacity-60" data-alt="Futuristic glowing lines and points" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCkIwMnMMJc3kA10K1WKYKoLqpApR3pFRe5z_XclMkoeWzwMY1ulsq4Nm_vyMPpxORBKbnmpCDj2nLHDzU2RAw-DIQ-uRc7-TPo8CrFSEZT5R-GAUt7OG8biIzqCxy1QuyG7Kig3lAqJVH50m6msMEHzt92isQQ6aBtdW1mEy9IxQ_yBeMrS9Vk0SM3wc8j8odXERvg47yRXDB3_VZlaI1XX7I-0Ru8IrWXOUR9JyynO2-iawaAKMJB02JdLPrcLeRDajT3p7WYqqM"/>
+</div>
+<div class="relative cell-ratio bg-[#0E1414] border border-[#1E2E2D] group cursor-pointer overflow-hidden">
+<img class="w-full h-full object-cover opacity-60" data-alt="Colorful abstract gradient background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBJirNa1ZBwDIH6OLECoDTS78T8vH48OVoi56MU0NezE55AnxOg2ek4wZoNFdtzGiv_9FrENXKANq7-XC6H4jJKcvU0VuazDW7bDVVrb6r2vCW8xfRTCWkLuxkeo8KEyncYPQkYTOzAc6KrzI6UVijrKWsgHeQCvV-lALNnYp4Ue-DO58TQ-8Ud1Q-k_Yzx9U3Dz28yFHx8Vjs6PBD1ovCmVeYX3WxdxKcyMVwQHxnR__QLr1hpRJgsfForFQu4TJw9yZdUKV7EfKs"/>
+<div class="absolute top-1.5 right-1.5 px-1.5 py-0.5 bg-[#C4854A] text-white font-mono text-[9px] uppercase tracking-tighter">Medium</div>
+</div>
+<div class="relative cell-ratio bg-[#0E1414] border border-[#1E2E2D] group cursor-pointer overflow-hidden">
+<img class="w-full h-full object-cover opacity-60" data-alt="Deep blue geometric pattern" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0WJOFW9-jSl36-GjbH7v2a7MpgQnWktS-_lVZfc9RUKg4rwnSvRMHnZrX6AWSiWtp1c7EWgoljZndfmoDUBL02zznmcfTqz5ZFUHoLTxg19KVsPGfdfGS3YW-nMBYV5SCUqzXQsrPx6-rMvYhfd9I9PIeULZMSaxOOmBvUyGJAhK2vSUjUvQGsVtKEuG54rXa5gxATArCkmlGM1idxtORI1xPDNGS0zUlC7MpFwE5vwia5vsXLdU8hcwfzxMksmMT8f0tDEtr_os"/>
+</div>
+</div>
+</main>
+<!-- Bottom Action Bar (Fixed) -->
+<footer class="fixed bottom-0 left-0 w-full bg-[#141D1D] border-t border-[#1E2E2D] px-6 pt-4 pb-10 z-[60] shadow-[0_-8px_24px_rgba(0,0,0,0.5)]">
+<div class="flex items-center justify-between gap-4 max-w-lg mx-auto">
+<button class="flex-1 py-3 text-[#97bcba] font-mono text-[11px] uppercase tracking-widest hover:text-white transition-colors">
+        Deselect All
+      </button>
+<button class="flex-[1.5] py-3 bg-[#E05C5C] text-white font-mono text-[11px] uppercase tracking-widest font-bold rounded-sm active:scale-95 transition-all">
+        Delete 6 Images
+      </button>
+</div>
+</footer>
+<!-- BottomNavBar logic (Supressed on details/results context for focus) -->
+<!-- Note: The task implies we are in a selection flow, so BottomNavBar is replaced by task-specific actions -->
+<!-- Custom Surgical Utility Bar (Floating breadcrumb/status) -->
+<div class="fixed bottom-24 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-surface-container-highest/70 backdrop-blur-xl border border-outline-variant/20 rounded-full z-50 flex items-center gap-3">
+<span class="w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></span>
+<span class="font-mono text-[9px] uppercase tracking-wider text-on-surface-variant">Selection Active: 6/18 items</span>
+</div>
+</body></html>
