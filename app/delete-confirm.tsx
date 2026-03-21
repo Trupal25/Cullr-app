@@ -1,15 +1,56 @@
-import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import * as MediaLibrary from 'expo-media-library';
+import * as Haptics from 'expo-haptics';
+import { useScanStore } from '../src/store/scan-store';
+import { formatMB } from '../src/services/scan-orchestrator';
 import { Colors } from '../src/theme';
 
 export default function DeleteConfirmScreen(): React.JSX.Element {
   const router = useRouter();
+  const { state, removeDeleted, updateStats } = useScanStore();
+  const [deleting, setDeleting] = useState(false);
 
-  const handleDelete = (): void => {
-    router.back();
+  const selectedResults = useMemo(
+    () => state.scanResults.filter((r) => state.selectedIds.has(r.asset.id)),
+    [state.scanResults, state.selectedIds]
+  );
+
+  const selectedCount = selectedResults.length;
+  const selectedBytes = useMemo(
+    () => selectedResults.reduce((sum, r) => sum + r.asset.fileSize, 0),
+    [selectedResults]
+  );
+
+  const handleDelete = async (): Promise<void> => {
+    if (deleting || selectedCount === 0) return;
+
+    setDeleting(true);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+
+    try {
+      const assetIds = selectedResults.map((r) => r.asset.id);
+      const success = await MediaLibrary.deleteAssetsAsync(assetIds);
+
+      if (success) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        removeDeleted(assetIds);
+        updateStats({
+          totalDeleted: state.stats.totalDeleted + selectedCount,
+          totalMBFreed: state.stats.totalMBFreed + selectedBytes / (1024 * 1024),
+        });
+        router.back();
+      } else {
+        Alert.alert('Delete Failed', 'Some images could not be deleted. They may be in a protected album.');
+        setDeleting(false);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Something went wrong while deleting images.');
+      setDeleting(false);
+    }
   };
 
   const handleCancel = (): void => {
@@ -18,7 +59,6 @@ export default function DeleteConfirmScreen(): React.JSX.Element {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['bottom']}>
-      {/* Blurred Background Overlay */}
       <View style={styles.overlay}>
         <View style={styles.ghostGrid}>
           {Array.from({ length: 6 }).map((_, i) => (
@@ -27,52 +67,51 @@ export default function DeleteConfirmScreen(): React.JSX.Element {
         </View>
       </View>
 
-      {/* Bottom Sheet */}
       <View style={styles.sheetContainer}>
         <View style={styles.sheet}>
-          {/* Drag Handle */}
           <View style={styles.handleRow}>
             <View style={styles.handle} />
           </View>
 
-          {/* Content */}
           <View style={styles.sheetContent}>
-            {/* Trash Icon */}
             <View style={styles.trashIconContainer}>
               <MaterialIcons name="delete" size={24} color={Colors.danger} />
             </View>
 
-            {/* Headline */}
-            <Text style={styles.headline}>Delete 18 images?</Text>
+            <Text style={styles.headline}>
+              Delete {selectedCount} image{selectedCount !== 1 ? 's' : ''}?
+            </Text>
 
-            {/* Body Text */}
             <Text style={styles.bodyText}>
               Permanently removes them from your gallery and iCloud. This cannot be undone.
             </Text>
 
-            {/* Stat Row */}
             <View style={styles.statRow}>
               <View style={styles.statChip}>
-                <Text style={styles.statText}>142 MB freed</Text>
+                <Text style={styles.statText}>{formatMB(selectedBytes)} freed</Text>
               </View>
               <View style={styles.statChip}>
-                <Text style={styles.statText}>18 files</Text>
+                <Text style={styles.statText}>{selectedCount} files</Text>
               </View>
             </View>
 
-            {/* Action Buttons */}
             <View style={styles.actions}>
               <Pressable
                 onPress={handleDelete}
+                disabled={deleting}
                 style={({ pressed }) => [
                   styles.deleteButton,
                   pressed && styles.deleteButtonPressed,
+                  deleting && styles.deleteButtonDisabled,
                 ]}
               >
-                <Text style={styles.deleteButtonText}>Delete Permanently</Text>
+                <Text style={styles.deleteButtonText}>
+                  {deleting ? 'Deleting...' : 'Delete Permanently'}
+                </Text>
               </Pressable>
               <Pressable
                 onPress={handleCancel}
+                disabled={deleting}
                 style={({ pressed }) => [
                   styles.cancelButton,
                   pressed && styles.cancelButtonPressed,
@@ -84,7 +123,6 @@ export default function DeleteConfirmScreen(): React.JSX.Element {
           </View>
         </View>
 
-        {/* Bottom Status Bar */}
         <View style={styles.statusBar}>
           <Text style={styles.statusText}>System: Awaiting_Confirmation</Text>
           <Text style={styles.statusText}>Auth: Validated</Text>
@@ -99,8 +137,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'transparent',
   },
-
-  // Overlay
   overlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: Colors.bgBase,
@@ -120,8 +156,6 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     backgroundColor: Colors.surfaceContainerHighest,
   },
-
-  // Sheet
   sheetContainer: {
     flex: 1,
     justifyContent: 'flex-end',
@@ -154,8 +188,6 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     alignItems: 'center',
   },
-
-  // Trash Icon
   trashIconContainer: {
     width: 56,
     height: 56,
@@ -165,8 +197,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 20,
   },
-
-  // Text
   headline: {
     fontFamily: 'SpaceGrotesk_600SemiBold',
     fontSize: 24,
@@ -183,8 +213,6 @@ const styles = StyleSheet.create({
     maxWidth: 280,
     marginBottom: 28,
   },
-
-  // Stats
   statRow: {
     flexDirection: 'row',
     gap: 12,
@@ -204,8 +232,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: Colors.textMuted,
   },
-
-  // Actions
   actions: {
     width: '100%',
     gap: 10,
@@ -221,6 +247,9 @@ const styles = StyleSheet.create({
   deleteButtonPressed: {
     backgroundColor: 'rgba(224, 92, 92, 0.2)',
     transform: [{ scale: 0.98 }],
+  },
+  deleteButtonDisabled: {
+    opacity: 0.5,
   },
   deleteButtonText: {
     fontFamily: 'SpaceGrotesk_600SemiBold',
@@ -242,8 +271,6 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     letterSpacing: -0.3,
   },
-
-  // Status Bar
   statusBar: {
     backgroundColor: Colors.surfaceContainerHigh,
     flexDirection: 'row',

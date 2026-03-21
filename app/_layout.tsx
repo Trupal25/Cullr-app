@@ -16,9 +16,40 @@ import {
   Inter_500Medium,
   Inter_600SemiBold,
 } from '@expo-google-fonts/inter';
+import { ScanProvider, useScanStore } from '../src/store/scan-store';
 import { Colors } from '../src/theme';
 
 SplashScreen.preventAutoHideAsync();
+
+function RootNavigator(): React.JSX.Element | null {
+  const { state } = useScanStore();
+
+  if (!state.isHydrated) return null;
+
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: Colors.surface },
+        animation: 'fade',
+      }}
+    >
+      {/* All screens must be declared unconditionally so expo-router
+          builds the full route manifest. Conditional routing is handled
+          by Redirect components inside each screen. */}
+      <Stack.Screen name="onboarding" />
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen
+        name="delete-confirm"
+        options={{
+          presentation: 'containedTransparentModal',
+          animation: 'slide_from_bottom',
+          contentStyle: { backgroundColor: 'transparent' },
+        }}
+      />
+    </Stack>
+  );
+}
 
 export default function RootLayout(): React.JSX.Element | null {
   const [fontsLoaded] = useFonts({
@@ -39,31 +70,12 @@ export default function RootLayout(): React.JSX.Element | null {
     }
   }, [fontsLoaded]);
 
-  if (!fontsLoaded) {
-    return null;
-  }
+  if (!fontsLoaded) return null;
 
   return (
-    <>
+    <ScanProvider>
       <StatusBar style="light" />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: Colors.surface },
-          animation: 'fade',
-        }}
-      >
-        <Stack.Screen name="onboarding" />
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen
-          name="delete-confirm"
-          options={{
-            presentation: 'transparentModal',
-            animation: 'slide_from_bottom',
-            contentStyle: { backgroundColor: 'transparent' },
-          }}
-        />
-      </Stack>
-    </>
+      <RootNavigator />
+    </ScanProvider>
   );
 }

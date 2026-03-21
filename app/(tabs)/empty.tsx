@@ -1,36 +1,80 @@
-import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import React, { useCallback } from 'react';
+import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import { Header } from '../../src/components/header';
 import { BottomNav } from '../../src/components/bottom-nav';
 import { StatusBarPill } from '../../src/components/status-bar-pill';
+import { useScanStore } from '../../src/store/scan-store';
+import { useMediaPermission } from '../../src/hooks/use-permissions';
+import { runScan } from '../../src/services/scan-orchestrator';
 import { Colors } from '../../src/theme';
 
 export default function EmptyStateScreen(): React.JSX.Element {
+  const router = useRouter();
+  const { setScanStatus, setScanProgress, setResults, updateStats, state } = useScanStore();
+  const { requestPermission, status: permissionStatus } = useMediaPermission();
+
+  const handleScanAgain = useCallback(async (): Promise<void> => {
+    if (permissionStatus !== 'granted') {
+      const granted = await requestPermission();
+      if (!granted) {
+        Alert.alert('Permission Required', 'Cullr needs access to your photo library.');
+        return;
+      }
+    }
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setScanStatus('scanning');
+
+    try {
+      const results = await runScan((label, progress) => {
+        setScanProgress(progress, label);
+      });
+
+      setResults(results);
+      updateStats({
+        lastScanDate: new Date().toISOString(),
+        totalScanned: results.length,
+        totalFlagged: results.length,
+      });
+
+      if (results.length > 0) {
+        router.replace('/(tabs)/results');
+      }
+      // If still 0 results, we stay on this screen
+      setScanStatus('done');
+    } catch {
+      setScanStatus('idle');
+      Alert.alert('Scan Error', 'Something went wrong while scanning.');
+    }
+  }, [permissionStatus, requestPermission, setScanStatus, setScanProgress, setResults, updateStats, router]);
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
       <Header />
 
       <View style={styles.content}>
         <View style={styles.centerContent}>
-          {/* Atmospheric Graphic */}
           <View style={styles.graphicContainer}>
             <View style={styles.glowCircle} />
             <Text style={styles.zeroText}>0</Text>
             <View style={styles.underline} />
           </View>
 
-          {/* Typography Cluster */}
           <View style={styles.textCluster}>
             <Text style={styles.headline}>Nothing to cull.</Text>
             <Text style={styles.subtitle}>
-              Your gallery looks clean. No spam or junk detected.
+              {state.lastScanType === 'source'
+                ? 'No messaging app images found in this range.'
+                : 'Your gallery looks clean. No spam or junk detected.'}
             </Text>
           </View>
 
-          {/* Scan Again Button */}
           <Pressable
+            onPress={handleScanAgain}
             style={({ pressed }) => [
               styles.scanButton,
               pressed && styles.scanButtonPressed,
@@ -42,7 +86,6 @@ export default function EmptyStateScreen(): React.JSX.Element {
         </View>
       </View>
 
-      {/* Status Pill */}
       <View style={styles.statusPillContainer}>
         <StatusBarPill />
       </View>
@@ -69,8 +112,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 40,
   },
-
-  // Graphic
   graphicContainer: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -97,8 +138,6 @@ const styles = StyleSheet.create({
     opacity: 0.3,
     marginTop: -8,
   },
-
-  // Text Cluster
   textCluster: {
     alignItems: 'center',
     gap: 12,
@@ -117,8 +156,6 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     maxWidth: 280,
   },
-
-  // Scan Button
   scanButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -141,8 +178,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: Colors.textSecondary,
   },
-
-  // Status Pill
   statusPillContainer: {
     marginBottom: 12,
   },

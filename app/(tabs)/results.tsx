@@ -1,32 +1,16 @@
-import React, { useState, useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { FlashList } from '@shopify/flash-list';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import { Header } from '../../src/components/header';
+import { useScanStore } from '../../src/store/scan-store';
+import { computeTotalBytes, formatMB } from '../../src/services/scan-orchestrator';
 import { Colors } from '../../src/theme';
-
-type ConfidenceLevel = 'HIGH' | 'MEDIUM' | 'LOW' | 'NONE';
-
-type GridItem = {
-  id: string;
-  image: number;
-  confidence: ConfidenceLevel;
-};
-
-const GRID_ITEMS: GridItem[] = [
-  { id: '1', image: require('../../assets/images/grid/grid-1.jpg'), confidence: 'HIGH' },
-  { id: '2', image: require('../../assets/images/grid/grid-2.jpg'), confidence: 'MEDIUM' },
-  { id: '3', image: require('../../assets/images/grid/grid-3.jpg'), confidence: 'HIGH' },
-  { id: '4', image: require('../../assets/images/grid/grid-4.jpg'), confidence: 'MEDIUM' },
-  { id: '5', image: require('../../assets/images/grid/grid-5.jpg'), confidence: 'NONE' },
-  { id: '6', image: require('../../assets/images/grid/grid-6.jpg'), confidence: 'NONE' },
-  { id: '7', image: require('../../assets/images/grid/grid-7.jpg'), confidence: 'NONE' },
-  { id: '8', image: require('../../assets/images/grid/grid-8.jpg'), confidence: 'MEDIUM' },
-  { id: '9', image: require('../../assets/images/grid/grid-9.jpg'), confidence: 'NONE' },
-];
+import type { ConfidenceLevel, ScoredResult } from '../../src/types';
 
 const FILTERS: { key: ConfidenceLevel | 'ALL'; label: string }[] = [
   { key: 'ALL', label: 'All' },
@@ -41,55 +25,50 @@ const BADGE_COLORS: Record<ConfidenceLevel, string> = {
   HIGH: Colors.danger,
   MEDIUM: Colors.warningOrange,
   LOW: Colors.outline,
-  NONE: 'transparent',
+  CLEAN: 'transparent',
 };
 
 export default function ResultsScreen(): React.JSX.Element {
   const router = useRouter();
-  const [activeFilter, setActiveFilter] = useState<ConfidenceLevel | 'ALL'>('ALL');
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set(['1', '3', '6']));
+  const { state, toggleSelect, deselectAll } = useScanStore();
+  const [activeFilter, setActiveFilter] = React.useState<ConfidenceLevel | 'ALL'>('ALL');
 
-  const filteredItems = activeFilter === 'ALL'
-    ? GRID_ITEMS
-    : GRID_ITEMS.filter((item) => item.confidence === activeFilter);
+  const isSourceMode = state.lastScanType === 'source';
 
-  const toggleSelection = useCallback((id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  }, []);
+  const filteredItems = useMemo(() => {
+    if (activeFilter === 'ALL') return state.scanResults;
+    return state.scanResults.filter((item) => item.confidence === activeFilter);
+  }, [state.scanResults, activeFilter]);
 
-  const deselectAll = useCallback(() => {
-    setSelectedIds(new Set());
-  }, []);
+  const totalItems = state.scanResults.length;
+  const selectedCount = state.selectedIds.size;
+  const totalBytes = useMemo(() => computeTotalBytes(state.scanResults), [state.scanResults]);
+
+  const handleToggle = useCallback((id: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    toggleSelect(id);
+  }, [toggleSelect]);
 
   const handleDelete = useCallback(() => {
+    if (selectedCount === 0) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     router.push('/delete-confirm');
-  }, [router]);
+  }, [selectedCount, router]);
 
-  const totalItems = GRID_ITEMS.length;
-  const selectedCount = selectedIds.size;
-
-  const renderItem = useCallback(({ item }: { item: GridItem }) => {
-    const isSelected = selectedIds.has(item.id);
+  const renderItem = useCallback(({ item }: { item: ScoredResult }) => {
+    const isSelected = state.selectedIds.has(item.asset.id);
     return (
       <Pressable
-        onPress={() => toggleSelection(item.id)}
+        onPress={() => handleToggle(item.asset.id)}
         style={[styles.gridCell, isSelected && styles.gridCellSelected]}
       >
         <Image
-          source={item.image}
+          source={{ uri: item.asset.uri }}
           style={styles.gridImage}
           contentFit="cover"
           transition={200}
         />
-        {item.confidence !== 'NONE' && (
+        {item.confidence !== 'CLEAN' && (
           <View style={[styles.badge, { backgroundColor: BADGE_COLORS[item.confidence] }]}>
             <Text style={styles.badgeText}>{item.confidence}</Text>
           </View>
@@ -104,21 +83,23 @@ export default function ResultsScreen(): React.JSX.Element {
         )}
       </Pressable>
     );
-  }, [selectedIds, toggleSelection]);
+  }, [state.selectedIds, handleToggle]);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
       <Header />
 
-      {/* Summary Strip */}
       <View style={styles.summaryStrip}>
         <Text style={styles.summaryTitle}>
-          {totalItems} spam images
+          {totalItems} {isSourceMode ? 'image' : 'spam image'}{totalItems !== 1 ? 's' : ''}
+          {isSourceMode ? ' from messaging apps' : ''}
         </Text>
-        <Text style={styles.summarySubtitle}>142 MB · tap to select</Text>
+        <Text style={styles.summarySubtitle}>
+          {formatMB(totalBytes)} · tap to select
+        </Text>
       </View>
 
-      {/* Filters */}
+      {!isSourceMode && (
       <View style={styles.filterRow}>
         {FILTERS.map((filter) => (
           <Pressable
@@ -140,18 +121,17 @@ export default function ResultsScreen(): React.JSX.Element {
           </Pressable>
         ))}
       </View>
+      )}
 
-      {/* Grid */}
       <View style={styles.gridContainer}>
         <FlashList
           data={filteredItems}
           renderItem={renderItem}
           numColumns={COLUMN_COUNT}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item.asset.id}
         />
       </View>
 
-      {/* Selection Status Pill */}
       {selectedCount > 0 && (
         <View style={styles.selectionPill}>
           <View style={styles.pulseDot} />
@@ -161,7 +141,6 @@ export default function ResultsScreen(): React.JSX.Element {
         </View>
       )}
 
-      {/* Bottom Action Bar */}
       <View style={styles.actionBar}>
         <Pressable onPress={deselectAll} style={styles.deselectButton}>
           <Text style={styles.deselectText}>Deselect All</Text>
@@ -171,10 +150,11 @@ export default function ResultsScreen(): React.JSX.Element {
           style={({ pressed }) => [
             styles.deleteButton,
             pressed && styles.deleteButtonPressed,
+            selectedCount === 0 && styles.deleteButtonDisabled,
           ]}
         >
           <Text style={styles.deleteButtonText}>
-            Delete {selectedCount} Images
+            Delete {selectedCount} Image{selectedCount !== 1 ? 's' : ''}
           </Text>
         </Pressable>
       </View>
@@ -187,8 +167,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.surface,
   },
-
-  // Summary
   summaryStrip: {
     backgroundColor: Colors.bgSurface,
     paddingHorizontal: 16,
@@ -207,8 +185,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: Colors.textSecondary,
   },
-
-  // Filters
   filterRow: {
     flexDirection: 'row',
     paddingHorizontal: 16,
@@ -238,8 +214,6 @@ const styles = StyleSheet.create({
     color: Colors.bgBase,
     fontFamily: 'SpaceGrotesk_700Bold',
   },
-
-  // Grid
   gridContainer: {
     flex: 1,
     paddingHorizontal: 2,
@@ -292,8 +266,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 2,
   },
-
-  // Selection Pill
   selectionPill: {
     position: 'absolute',
     bottom: 96,
@@ -321,8 +293,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: Colors.onSurfaceVariant,
   },
-
-  // Action Bar
   actionBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -360,6 +330,9 @@ const styles = StyleSheet.create({
   },
   deleteButtonPressed: {
     transform: [{ scale: 0.95 }],
+  },
+  deleteButtonDisabled: {
+    opacity: 0.4,
   },
   deleteButtonText: {
     fontFamily: 'SpaceGrotesk_700Bold',

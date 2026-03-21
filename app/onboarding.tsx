@@ -1,21 +1,44 @@
-import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, Redirect } from 'expo-router';
+import { useScanStore } from '../src/store/scan-store';
+import { useMediaPermission } from '../src/hooks/use-permissions';
 import { Colors } from '../src/theme';
 
 export default function OnboardingScreen(): React.JSX.Element {
   const router = useRouter();
+  const { state, markOnboarded } = useScanStore();
+  const { requestPermission } = useMediaPermission();
+  const [loading, setLoading] = useState(false);
 
-  const handleInitialize = (): void => {
+  // Already onboarded — skip this screen entirely
+  if (state.isHydrated && state.isOnboarded) {
+    return <Redirect href="/(tabs)" />;
+  }
+
+  const handleInitialize = async (): Promise<void> => {
+    setLoading(true);
+    const granted = await requestPermission();
+    setLoading(false);
+
+    if (!granted) {
+      Alert.alert(
+        'Permission Required',
+        'Cullr needs access to your photo library to scan for spam images. Please grant permission in Settings.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    markOnboarded();
     router.replace('/(tabs)');
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        {/* Top Third: Abstract Geometric Section */}
         <View style={styles.geometricSection}>
           <View style={styles.geometricContainer}>
             <View style={[styles.square, styles.square1]} />
@@ -27,7 +50,6 @@ export default function OnboardingScreen(): React.JSX.Element {
           </View>
         </View>
 
-        {/* Middle Section: Hero Text & Features */}
         <View style={styles.middleSection}>
           <View style={styles.heroText}>
             <Text style={styles.headline}>Meet Cullr.</Text>
@@ -55,16 +77,19 @@ export default function OnboardingScreen(): React.JSX.Element {
           </View>
         </View>
 
-        {/* Bottom Section: CTA and Trust */}
         <View style={styles.bottomSection}>
           <Pressable
             onPress={handleInitialize}
+            disabled={loading}
             style={({ pressed }) => [
               styles.ctaButton,
               pressed && styles.ctaButtonPressed,
+              loading && styles.ctaButtonDisabled,
             ]}
           >
-            <Text style={styles.ctaText}>Initialize Library Scan</Text>
+            <Text style={styles.ctaText}>
+              {loading ? 'Requesting Access...' : 'Initialize Library Scan'}
+            </Text>
           </Pressable>
 
           <View style={styles.trustSection}>
@@ -117,8 +142,6 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
     justifyContent: 'space-between',
   },
-
-  // Geometric Section
   geometricSection: {
     flex: 1,
     alignItems: 'center',
@@ -154,8 +177,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(60, 73, 71, 0.2)',
   },
-
-  // Middle Section
   middleSection: {
     flex: 1.5,
   },
@@ -201,8 +222,6 @@ const styles = StyleSheet.create({
     color: 'rgba(107, 143, 141, 0.6)',
     lineHeight: 18,
   },
-
-  // Bottom Section
   bottomSection: {
     alignItems: 'center',
     paddingTop: 24,
@@ -225,6 +244,9 @@ const styles = StyleSheet.create({
   ctaButtonPressed: {
     transform: [{ scale: 0.98 }],
     backgroundColor: 'rgba(62, 207, 191, 0.05)',
+  },
+  ctaButtonDisabled: {
+    opacity: 0.5,
   },
   ctaText: {
     fontFamily: 'SpaceGrotesk_400Regular',
