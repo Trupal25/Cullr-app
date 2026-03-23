@@ -30,9 +30,12 @@ export default function EmptyStateScreen(): React.JSX.Element {
     setScanStatus('scanning');
 
     try {
-      const results = await runScan((label, progress) => {
-        setScanProgress(progress, label);
-      });
+      const results = await runScan(
+        (label, progress) => {
+          setScanProgress(progress, label);
+        },
+        { type: state.lastScanType, range: 'all' } // Default range 'all' if not stored, but type matches the previous mode
+      );
 
       setResults(results);
       updateStats({

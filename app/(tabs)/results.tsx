@@ -1,5 +1,14 @@
-import React, { useCallback, useMemo } from 'react';
-import { View, Text, Pressable, StyleSheet, Modal, Share, Platform } from 'react-native';
+import React, { useCallback, useMemo, useRef } from 'react';
+import {
+  View,
+  Text,
+  Pressable,
+  StyleSheet,
+  Modal,
+  Dimensions,
+  FlatList,
+  Share,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { FlashList } from '@shopify/flash-list';
@@ -20,6 +29,7 @@ const FILTERS: { key: ConfidenceLevel | 'ALL'; label: string }[] = [
 ];
 
 const COLUMN_COUNT = 3;
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const BADGE_COLORS: Record<ConfidenceLevel, string> = {
   HIGH: Colors.danger,
@@ -34,7 +44,9 @@ export default function ResultsScreen(): React.JSX.Element {
   const [activeFilter, setActiveFilter] = React.useState<ConfidenceLevel | 'ALL'>('ALL');
 
   const isSourceMode = state.lastScanType === 'source';
-  const [viewerIndex, setViewerIndex] = React.useState<number | null>(null);
+  const [viewerIndex, setViewerIndex] = React.useState<number>(-1);
+  const viewerListRef = useRef<FlatList>(null);
+  const [isSharing, setIsSharing] = React.useState(false);
 
   const filteredItems = useMemo(() => {
     if (activeFilter === 'ALL') return state.scanResults;
@@ -45,15 +57,15 @@ export default function ResultsScreen(): React.JSX.Element {
   const selectedCount = state.selectedIds.size;
   const totalBytes = useMemo(() => computeTotalBytes(state.scanResults), [state.scanResults]);
 
-  // Viewer helpers
-  const viewerItem = viewerIndex !== null ? filteredItems[viewerIndex] ?? null : null;
-  const canGoPrev = viewerIndex !== null && viewerIndex > 0;
-  const canGoNext = viewerIndex !== null && viewerIndex < filteredItems.length - 1;
-
   const handleToggle = useCallback((id: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     toggleSelect(id);
   }, [toggleSelect]);
+
+  const handleSelectAll = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    selectAll();
+  }, [selectAll]);
 
   const handleDelete = useCallback(() => {
     if (selectedCount === 0) return;
@@ -61,28 +73,42 @@ export default function ResultsScreen(): React.JSX.Element {
     router.push('/delete-confirm');
   }, [selectedCount, router]);
 
-  const handleSelectAll = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    selectAll();
-  }, [selectAll]);
-
-  const handleShare = useCallback(async (uri: string) => {
+  const handleShare = useCallback(async (item: ScoredResult) => {
+    if (isSharing) return;
+    setIsSharing(true);
     try {
       await Share.share(
-        Platform.OS === 'ios'
-          ? { url: uri }
-          : { message: uri }
+        { url: item.asset.uri, title: 'Share image from Cullr' },
+        { dialogTitle: 'Share this image' }
       );
     } catch {
-      // User cancelled — no action needed
+      // User cancelled — that's fine
+    } finally {
+      setIsSharing(false);
     }
+  }, [isSharing]);
+
+  const openViewer = useCallback((index: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setViewerIndex(index);
   }, []);
+
+  const closeViewer = useCallback(() => {
+    setViewerIndex(-1);
+  }, []);
+
+  const onViewerScrollEnd = useCallback((e: { nativeEvent: { contentOffset: { x: number } } }) => {
+    const newIndex = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+    setViewerIndex(newIndex);
+  }, []);
+
+  const viewerItem = viewerIndex >= 0 ? filteredItems[viewerIndex] : null;
 
   const renderItem = useCallback(({ item, index }: { item: ScoredResult; index: number }) => {
     const isSelected = state.selectedIds.has(item.asset.id);
     return (
       <Pressable
-        onPress={() => setViewerIndex(index)}
+        onPress={() => openViewer(index)}
         onLongPress={() => handleToggle(item.asset.id)}
         style={[styles.gridCell, isSelected && styles.gridCellSelected]}
       >
@@ -97,10 +123,10 @@ export default function ResultsScreen(): React.JSX.Element {
             <Text style={styles.badgeText}>{item.confidence}</Text>
           </View>
         )}
-
-        {/* Selection circle */}
-        <Pressable
-          style={styles.selectHotspot}
+        
+        {/* Dedicated selection hotspot */}
+        <Pressable 
+          style={styles.selectHotspot} 
           onPress={() => handleToggle(item.asset.id)}
           hitSlop={{ top: 12, right: 12, bottom: 12, left: 12 }}
         >
@@ -112,7 +138,26 @@ export default function ResultsScreen(): React.JSX.Element {
         {isSelected && <View style={styles.selectionOverlay} pointerEvents="none" />}
       </Pressable>
     );
-  }, [state.selectedIds, handleToggle]);
+  }, [state.selectedIds, handleToggle, openViewer]);
+
+  const renderViewerPage = useCallback(({ item }: { item: ScoredResult }) => {
+    return (
+      <View style={styles.viewerPage}>
+        <Image
+          source={{ uri: item.asset.uri }}
+          style={styles.viewerImage}
+          contentFit="contain"
+          transition={150}
+        />
+      </View>
+    );
+  }, []);
+
+  const getViewerItemLayout = useCallback((_data: unknown, index: number) => ({
+    length: SCREEN_WIDTH,
+    offset: SCREEN_WIDTH * index,
+    index,
+  }), []);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
@@ -124,33 +169,31 @@ export default function ResultsScreen(): React.JSX.Element {
           {isSourceMode ? ' from messaging apps' : ''}
         </Text>
         <Text style={styles.summarySubtitle}>
-          {formatMB(totalBytes)} · tap to preview · long press to select
+          {formatMB(totalBytes)} · tap to preview · long-press to select
         </Text>
       </View>
 
-      {!isSourceMode && (
-        <View style={styles.filterRow}>
-          {FILTERS.map((filter) => (
-            <Pressable
-              key={filter.key}
-              onPress={() => setActiveFilter(filter.key)}
+      <View style={styles.filterRow}>
+        {FILTERS.map((filter) => (
+          <Pressable
+            key={filter.key}
+            onPress={() => setActiveFilter(filter.key)}
+            style={[
+              styles.filterChip,
+              activeFilter === filter.key && styles.filterChipActive,
+            ]}
+          >
+            <Text
               style={[
-                styles.filterChip,
-                activeFilter === filter.key && styles.filterChipActive,
+                styles.filterText,
+                activeFilter === filter.key && styles.filterTextActive,
               ]}
             >
-              <Text
-                style={[
-                  styles.filterText,
-                  activeFilter === filter.key && styles.filterTextActive,
-                ]}
-              >
-                {filter.label}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-      )}
+              {filter.label}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
 
       <View style={styles.gridContainer}>
         <FlashList
@@ -165,27 +208,20 @@ export default function ResultsScreen(): React.JSX.Element {
         <View style={styles.selectionPill}>
           <View style={styles.pulseDot} />
           <Text style={styles.selectionPillText}>
-            {selectedCount}/{totalItems} selected
+            Selection Active: {selectedCount}/{totalItems} items
           </Text>
         </View>
       )}
 
-      {/* Action Bar */}
       <View style={styles.actionBar}>
-        <Pressable
-          onPress={selectedCount === totalItems ? deselectAll : handleSelectAll}
-          style={styles.selectAllButton}
+        <Pressable 
+          onPress={selectedCount === totalItems ? deselectAll : handleSelectAll} 
+          style={styles.deselectButton}
         >
-          <MaterialIcons
-            name={selectedCount === totalItems ? 'deselect' : 'select-all'}
-            size={18}
-            color={Colors.textMuted}
-          />
-          <Text style={styles.selectAllText}>
-            {selectedCount === totalItems ? 'Deselect' : 'Select All'}
+          <Text style={styles.deselectText}>
+            {selectedCount === totalItems ? 'Deselect All' : 'Select All'}
           </Text>
         </Pressable>
-
         <Pressable
           onPress={handleDelete}
           style={({ pressed }) => [
@@ -194,106 +230,120 @@ export default function ResultsScreen(): React.JSX.Element {
             selectedCount === 0 && styles.deleteButtonDisabled,
           ]}
         >
-          <MaterialIcons name="delete-outline" size={18} color="#FFF" />
           <Text style={styles.deleteButtonText}>
-            Delete{selectedCount > 0 ? ` ${selectedCount}` : ''}
+            Delete {selectedCount} Image{selectedCount !== 1 ? 's' : ''}
           </Text>
         </Pressable>
       </View>
 
-      {/* ── Full-Screen Viewer Modal ── */}
+      {/* ── Full-Screen Image Viewer with Swipe ── */}
       <Modal
-        visible={viewerIndex !== null}
+        visible={viewerIndex >= 0}
         transparent
         animationType="fade"
-        onRequestClose={() => setViewerIndex(null)}
+        onRequestClose={closeViewer}
+        statusBarTranslucent
       >
-        {viewerItem && (
+        {viewerIndex >= 0 && (
           <View style={styles.viewerContainer}>
-            <Image
-              source={{ uri: viewerItem.asset.uri }}
-              style={styles.viewerImage}
-              contentFit="contain"
+            {/* Swipeable image carousel */}
+            <FlatList
+              ref={viewerListRef}
+              data={filteredItems}
+              renderItem={renderViewerPage}
+              keyExtractor={(item) => `viewer-${item.asset.id}`}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              initialScrollIndex={viewerIndex}
+              getItemLayout={getViewerItemLayout}
+              onMomentumScrollEnd={onViewerScrollEnd}
+              bounces={false}
             />
 
-            {/* Top Bar */}
+            {/* Top Bar — close + counter */}
             <View style={styles.viewerTopbar}>
-              <Pressable
-                onPress={() => setViewerIndex(null)}
-                style={styles.viewerIconBtn}
-                hitSlop={20}
-              >
-                <MaterialIcons name="close" size={24} color="#FFF" />
-              </Pressable>
-
-              <Text style={styles.viewerCounter}>
-                {(viewerIndex ?? 0) + 1} / {filteredItems.length}
-              </Text>
-
-              <Pressable
-                onPress={() => handleShare(viewerItem.asset.uri)}
-                style={styles.viewerIconBtn}
-                hitSlop={20}
-              >
-                <MaterialIcons name="share" size={22} color="#FFF" />
-              </Pressable>
-            </View>
-
-            {/* Prev / Next Navigation */}
-            <View style={styles.viewerNav} pointerEvents="box-none">
-              <Pressable
-                onPress={() => canGoPrev && setViewerIndex((viewerIndex ?? 1) - 1)}
-                style={[styles.viewerArrow, !canGoPrev && styles.viewerArrowDisabled]}
-                disabled={!canGoPrev}
-                hitSlop={20}
-              >
-                <MaterialIcons name="chevron-left" size={32} color="#FFF" />
-              </Pressable>
-              <Pressable
-                onPress={() => canGoNext && setViewerIndex((viewerIndex ?? 0) + 1)}
-                style={[styles.viewerArrow, !canGoNext && styles.viewerArrowDisabled]}
-                disabled={!canGoNext}
-                hitSlop={20}
-              >
-                <MaterialIcons name="chevron-right" size={32} color="#FFF" />
-              </Pressable>
-            </View>
-
-            {/* Bottom Bar */}
-            <View style={styles.viewerBottomBar}>
-              <View style={styles.viewerInfo}>
-                <Text style={styles.viewerInfoText}>
-                  {formatMB(viewerItem.asset.fileSize)} · {viewerItem.asset.width}×{viewerItem.asset.height}
+              <View style={styles.viewerCounter}>
+                <Text style={styles.viewerCounterText}>
+                  {viewerIndex + 1} / {filteredItems.length}
                 </Text>
-                {viewerItem.reasons.length > 0 && (
-                  <Text style={styles.viewerReasonText} numberOfLines={2}>
-                    {viewerItem.reasons.join(' · ')}
-                  </Text>
-                )}
               </View>
-
               <Pressable
-                onPress={() => handleToggle(viewerItem.asset.id)}
-                style={[
-                  styles.viewerSelectBtn,
-                  state.selectedIds.has(viewerItem.asset.id) && styles.viewerSelectBtnActive,
-                ]}
+                onPress={closeViewer}
+                style={styles.viewerCloseBtn}
+                hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
               >
-                <MaterialIcons
-                  name={state.selectedIds.has(viewerItem.asset.id) ? 'check-circle' : 'radio-button-unchecked'}
-                  size={22}
-                  color={state.selectedIds.has(viewerItem.asset.id) ? Colors.primaryContainer : '#FFF'}
-                />
-                <Text
-                  style={[
-                    styles.viewerSelectText,
-                    state.selectedIds.has(viewerItem.asset.id) && styles.viewerSelectTextActive,
-                  ]}
-                >
-                  {state.selectedIds.has(viewerItem.asset.id) ? 'Selected' : 'Select'}
-                </Text>
+                <MaterialIcons name="close" size={28} color="#FFF" />
               </Pressable>
             </View>
+
+            {/* Swipe hint */}
+            {filteredItems.length > 1 && (
+              <View style={styles.swipeHint}>
+                <MaterialIcons name="swipe" size={16} color="rgba(255,255,255,0.4)" />
+                <Text style={styles.swipeHintText}>Swipe to browse</Text>
+              </View>
+            )}
+            
+            {/* Bottom Bar — info + actions */}
+            {viewerItem && (
+              <View style={styles.viewerBottomBar}>
+                <View style={styles.viewerInfo}>
+                  <Text style={styles.viewerInfoText}>
+                    {formatMB(viewerItem.asset.fileSize)} · {viewerItem.asset.width}×{viewerItem.asset.height}
+                  </Text>
+                  {viewerItem.reasons.length > 0 && (
+                    <Text style={styles.viewerReasonText} numberOfLines={2}>
+                      {viewerItem.reasons.join(' · ')}
+                    </Text>
+                  )}
+                </View>
+
+                <View style={styles.viewerActions}>
+                  {/* Share Button */}
+                  <Pressable
+                    onPress={() => handleShare(viewerItem)}
+                    style={({ pressed }) => [
+                      styles.viewerActionBtn,
+                      pressed && styles.viewerActionBtnPressed,
+                    ]}
+                    disabled={isSharing}
+                  >
+                    <MaterialIcons
+                      name={isSharing ? 'hourglass-top' : 'share'}
+                      size={20}
+                      color="#FFF"
+                    />
+                    <Text style={styles.viewerActionText}>
+                      {isSharing ? 'Sharing...' : 'Share'}
+                    </Text>
+                  </Pressable>
+
+                  {/* Select/Deselect Button */}
+                  <Pressable
+                    onPress={() => handleToggle(viewerItem.asset.id)}
+                    style={[
+                      styles.viewerSelectBtn,
+                      state.selectedIds.has(viewerItem.asset.id) && styles.viewerSelectBtnActive,
+                    ]}
+                  >
+                    <MaterialIcons
+                      name={state.selectedIds.has(viewerItem.asset.id) ? 'check-circle' : 'radio-button-unchecked'}
+                      size={22}
+                      color={state.selectedIds.has(viewerItem.asset.id) ? Colors.primaryContainer : '#FFF'}
+                    />
+                    <Text
+                      style={[
+                        styles.viewerSelectText,
+                        state.selectedIds.has(viewerItem.asset.id) && styles.viewerSelectTextActive,
+                      ]}
+                    >
+                      {state.selectedIds.has(viewerItem.asset.id) ? 'Selected' : 'Select'}
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
+            )}
           </View>
         )}
       </Modal>
@@ -301,14 +351,11 @@ export default function ResultsScreen(): React.JSX.Element {
   );
 }
 
-// ── Styles ──────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: Colors.surface,
   },
-
-  // ── Summary ──
   summaryStrip: {
     backgroundColor: Colors.bgSurface,
     paddingHorizontal: 16,
@@ -327,8 +374,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: Colors.textSecondary,
   },
-
-  // ── Filters ──
   filterRow: {
     flexDirection: 'row',
     paddingHorizontal: 16,
@@ -358,8 +403,6 @@ const styles = StyleSheet.create({
     color: Colors.bgBase,
     fontFamily: 'SpaceGrotesk_700Bold',
   },
-
-  // ── Grid ──
   gridContainer: {
     flex: 1,
     paddingHorizontal: 2,
@@ -421,8 +464,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.3)',
     borderColor: 'rgba(255, 255, 255, 0.4)',
   },
-
-  // ── Selection Pill ──
   selectionPill: {
     position: 'absolute',
     bottom: 96,
@@ -432,7 +473,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 16,
     paddingVertical: 6,
-    backgroundColor: 'rgba(49, 54, 53, 0.85)',
+    backgroundColor: 'rgba(49, 54, 53, 0.7)',
     borderRadius: 9999,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(60, 73, 71, 0.2)',
@@ -445,13 +486,11 @@ const styles = StyleSheet.create({
   },
   selectionPillText: {
     fontFamily: 'SpaceGrotesk_400Regular',
-    fontSize: 10,
+    fontSize: 9,
     letterSpacing: 1,
     textTransform: 'uppercase',
     color: Colors.onSurfaceVariant,
   },
-
-  // ── Action Bar ──
   actionBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -468,15 +507,12 @@ const styles = StyleSheet.create({
     shadowRadius: 24,
     elevation: 16,
   },
-  selectAllButton: {
+  deselectButton: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
     paddingVertical: 12,
+    alignItems: 'center',
   },
-  selectAllText: {
+  deselectText: {
     fontFamily: 'SpaceGrotesk_400Regular',
     fontSize: 11,
     letterSpacing: 1.5,
@@ -485,12 +521,9 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     flex: 1.5,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
     paddingVertical: 12,
     backgroundColor: Colors.danger,
+    alignItems: 'center',
     borderRadius: 2,
   },
   deleteButtonPressed: {
@@ -506,14 +539,19 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: '#FFFFFF',
   },
-
+  
   // ── Viewer Modal ──
   viewerContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.95)',
+    backgroundColor: 'rgba(0, 0, 0, 0.97)',
+  },
+  viewerPage: {
+    width: SCREEN_WIDTH,
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   viewerImage: {
-    flex: 1,
     width: '100%',
     height: '100%',
   },
@@ -522,48 +560,55 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    paddingTop: 52,
+    paddingTop: 50,
     paddingHorizontal: 20,
-    paddingBottom: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
     zIndex: 10,
   },
-  viewerIconBtn: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   viewerCounter: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 9999,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  viewerCounterText: {
     fontFamily: 'SpaceGrotesk_500Medium',
-    fontSize: 14,
+    fontSize: 12,
     color: 'rgba(255, 255, 255, 0.7)',
     letterSpacing: 1,
   },
-  viewerNav: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 8,
-  },
-  viewerArrow: {
+  viewerCloseBtn: {
     width: 44,
     height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    borderRadius: 22,
   },
-  viewerArrowDisabled: {
-    opacity: 0.25,
+  swipeHint: {
+    position: 'absolute',
+    top: '50%',
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 9999,
+    marginTop: 120,
+    opacity: 0.6,
+  },
+  swipeHintText: {
+    fontFamily: 'SpaceGrotesk_400Regular',
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.4)',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
   viewerBottomBar: {
     position: 'absolute',
@@ -572,8 +617,8 @@ const styles = StyleSheet.create({
     right: 0,
     paddingBottom: 40,
     paddingHorizontal: 24,
-    paddingTop: 24,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    paddingTop: 32,
+    backgroundColor: 'rgba(0,0,0,0.7)',
     gap: 16,
   },
   viewerInfo: {
@@ -591,16 +636,43 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.6)',
     lineHeight: 18,
   },
-  viewerSelectBtn: {
+  viewerActions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  viewerActionBtn: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
+    gap: 8,
     paddingVertical: 14,
     borderRadius: 8,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    borderColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+  },
+  viewerActionBtnPressed: {
+    backgroundColor: 'rgba(255,255,255,0.12)',
+  },
+  viewerActionText: {
+    fontFamily: 'SpaceGrotesk_600SemiBold',
+    fontSize: 12,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: '#FFF',
+  },
+  viewerSelectBtn: {
+    flex: 1.5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.3)',
+    backgroundColor: 'rgba(0,0,0,0.4)',
   },
   viewerSelectBtnActive: {
     borderColor: Colors.primaryContainer,

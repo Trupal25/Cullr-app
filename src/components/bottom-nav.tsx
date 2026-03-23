@@ -1,21 +1,20 @@
 import React from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
-import { useRouter, usePathname } from 'expo-router';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors } from '../theme';
 
-type TabKey = 'home' | 'scan' | 'stats' | 'settings';
+type TabKey = 'home' | 'stats' | 'settings';
 
 type BottomNavProps = {
   activeTab?: TabKey;
 };
 
-const TABS: { key: TabKey; icon: keyof typeof MaterialIcons.glyphMap; route: string }[] = [
-  { key: 'home',     icon: 'grid-view',        route: '/(tabs)' },
-  { key: 'scan',     icon: 'qr-code-scanner',  route: '/(tabs)' },
-  { key: 'stats',    icon: 'bar-chart',        route: '/(tabs)/stats' },
-  { key: 'settings', icon: 'settings',         route: '/(tabs)/settings' },
+const TABS: { key: TabKey; icon: keyof typeof MaterialIcons.glyphMap; label: string; route: string }[] = [
+  { key: 'home',     icon: 'grid-view',   label: 'Scan',     route: '/(tabs)' },
+  { key: 'stats',    icon: 'bar-chart',   label: 'Stats',    route: '/(tabs)/stats' },
+  { key: 'settings', icon: 'settings',    label: 'Settings', route: '/(tabs)/settings' },
 ];
 
 export function BottomNav({ activeTab = 'home' }: BottomNavProps): React.JSX.Element {
@@ -44,9 +43,12 @@ export function BottomNav({ activeTab = 'home' }: BottomNavProps): React.JSX.Ele
           >
             <MaterialIcons
               name={tab.icon}
-              size={24}
+              size={22}
               color={isActive ? Colors.primary : Colors.textMuted}
             />
+            <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
+              {tab.label}
+            </Text>
           </Pressable>
         );
       })}
@@ -59,19 +61,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    paddingTop: 12,
+    paddingTop: 10,
     backgroundColor: 'rgba(16, 20, 20, 0.95)',
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: 'rgba(49, 54, 53, 0.4)',
   },
   tab: {
-    padding: 12,
-    borderRadius: 9999,
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 12,
   },
   tabActive: {
     backgroundColor: 'rgba(62, 207, 191, 0.1)',
   },
   tabPressed: {
     opacity: 0.6,
+  },
+  tabLabel: {
+    fontFamily: 'SpaceGrotesk_400Regular',
+    fontSize: 9,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+    color: Colors.textMuted,
+  },
+  tabLabelActive: {
+    color: Colors.primary,
   },
 });
