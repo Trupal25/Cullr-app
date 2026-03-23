@@ -211,14 +211,20 @@ export default function ScanHomeScreen(): React.JSX.Element {
             </View>
 
             {/* Activity Feed Chip */}
-            <View style={styles.activityChip}>
+            <Pressable 
+              style={({ pressed }) => [styles.activityChip, pressed && { opacity: 0.7 }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/(tabs)/stats');
+              }}
+            >
               <MaterialIcons name="history" size={18} color={Colors.textMuted} />
               <Text style={styles.activityText}>
                 {lastScan
                   ? `Last scan: ${lastScan}${deletedCount > 0 ? ` • ${deletedCount} images deleted` : ''}`
                   : 'No scans yet'}
               </Text>
-            </View>
+            </Pressable>
           </Animated.View>
         )}
 

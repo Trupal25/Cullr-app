@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors } from '../theme';
 
-type TabKey = 'home' | 'scan' | 'ai' | 'settings';
+type TabKey = 'home' | 'scan' | 'stats' | 'settings';
 
 type BottomNavProps = {
   activeTab?: TabKey;
@@ -14,8 +14,8 @@ type BottomNavProps = {
 const TABS: { key: TabKey; icon: keyof typeof MaterialIcons.glyphMap; route: string }[] = [
   { key: 'home',     icon: 'grid-view',        route: '/(tabs)' },
   { key: 'scan',     icon: 'qr-code-scanner',  route: '/(tabs)' },
-  { key: 'ai',       icon: 'auto-awesome',     route: '/(tabs)' },
-  { key: 'settings', icon: 'settings',         route: '/(tabs)' },
+  { key: 'stats',    icon: 'bar-chart',        route: '/(tabs)/stats' },
+  { key: 'settings', icon: 'settings',         route: '/(tabs)/settings' },
 ];
 
 export function BottomNav({ activeTab = 'home' }: BottomNavProps): React.JSX.Element {

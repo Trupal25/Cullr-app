@@ -19,9 +19,11 @@ export default function TabLayout(): React.JSX.Element {
         sceneStyle: { backgroundColor: Colors.bgBase },
       }}
     >
-      <Tabs.Screen name="index"   options={{ title: 'Home' }} />
-      <Tabs.Screen name="results" options={{ title: 'Results' }} />
-      <Tabs.Screen name="empty"   options={{ title: 'Empty' }} />
+      <Tabs.Screen name="index"   options={{ title: 'Home', href: null }} />
+      <Tabs.Screen name="results" options={{ title: 'Results', href: null }} />
+      <Tabs.Screen name="empty"   options={{ title: 'Empty', href: null }} />
+      <Tabs.Screen name="stats"   options={{ title: 'Stats', href: null }} />
+      <Tabs.Screen name="settings" options={{ title: 'Settings', href: null }} />
     </Tabs>
   );
 }
