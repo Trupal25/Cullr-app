@@ -8,6 +8,7 @@ import {
   Dimensions,
   FlatList,
   Share,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
@@ -37,6 +38,30 @@ const BADGE_COLORS: Record<ConfidenceLevel, string> = {
   LOW: Colors.outline,
   CLEAN: 'transparent',
 };
+
+const ViewerImageItem = React.memo(({ item }: { item: ScoredResult }) => {
+  const [loading, setLoading] = React.useState(true);
+  
+  return (
+    <View style={styles.viewerPage}>
+      {loading && (
+        <ActivityIndicator 
+          size="large" 
+          color={Colors.primary} 
+          style={StyleSheet.absoluteFillObject} 
+        />
+      )}
+      <Image
+        source={{ uri: item.asset.uri }}
+        style={styles.viewerImage}
+        contentFit="contain"
+        transition={150}
+        onLoadStart={() => setLoading(true)}
+        onLoadEnd={() => setLoading(false)}
+      />
+    </View>
+  );
+});
 
 export default function ResultsScreen(): React.JSX.Element {
   const router = useRouter();
@@ -141,16 +166,7 @@ export default function ResultsScreen(): React.JSX.Element {
   }, [state.selectedIds, handleToggle, openViewer]);
 
   const renderViewerPage = useCallback(({ item }: { item: ScoredResult }) => {
-    return (
-      <View style={styles.viewerPage}>
-        <Image
-          source={{ uri: item.asset.uri }}
-          style={styles.viewerImage}
-          contentFit="contain"
-          transition={150}
-        />
-      </View>
-    );
+    return <ViewerImageItem item={item} />;
   }, []);
 
   const getViewerItemLayout = useCallback((_data: unknown, index: number) => ({
@@ -259,6 +275,8 @@ export default function ResultsScreen(): React.JSX.Element {
               getItemLayout={getViewerItemLayout}
               onMomentumScrollEnd={onViewerScrollEnd}
               bounces={false}
+              windowSize={3}
+              maxToRenderPerBatch={1}
             />
 
             {/* Top Bar — close + counter */}
@@ -369,7 +387,7 @@ const styles = StyleSheet.create({
   },
   summarySubtitle: {
     fontFamily: 'SpaceGrotesk_400Regular',
-    fontSize: 10,
+     fontSize: 10,
     letterSpacing: 2,
     textTransform: 'uppercase',
     color: Colors.textSecondary,
@@ -406,7 +424,7 @@ const styles = StyleSheet.create({
   gridContainer: {
     flex: 1,
     paddingHorizontal: 2,
-    paddingBottom: 120,
+    paddingBottom: 5,
   },
   gridCell: {
     flex: 1,

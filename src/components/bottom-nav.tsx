@@ -12,7 +12,7 @@ type BottomNavProps = {
 };
 
 const TABS: { key: TabKey; icon: keyof typeof MaterialIcons.glyphMap; label: string; route: string }[] = [
-  { key: 'home',     icon: 'grid-view',   label: 'Scan',     route: '/(tabs)' },
+  { key: 'home',     icon: 'home',        label: 'Home',     route: '/(tabs)' },
   { key: 'stats',    icon: 'bar-chart',   label: 'Stats',    route: '/(tabs)/stats' },
   { key: 'settings', icon: 'settings',    label: 'Settings', route: '/(tabs)/settings' },
 ];

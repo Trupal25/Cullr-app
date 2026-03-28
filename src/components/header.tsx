@@ -51,8 +51,8 @@ export function Header(): React.JSX.Element {
             <TouchableWithoutFeedback>
               <View style={styles.menuBox}>
                 <Pressable style={styles.menuItem} onPress={() => handleNav('/(tabs)')}>
-                  <MaterialIcons name="grid-view" size={20} color={Colors.textPrimary} />
-                  <Text style={styles.menuText}>Scan</Text>
+                  <MaterialIcons name="home" size={20} color={Colors.textPrimary} />
+                  <Text style={styles.menuText}>Home</Text>
                 </Pressable>
                 <Pressable style={styles.menuItem} onPress={() => handleNav('/(tabs)/stats')}>
                   <MaterialIcons name="bar-chart" size={20} color={Colors.textPrimary} />
