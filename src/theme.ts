@@ -1,45 +1,45 @@
 export const Colors = {
-  bgBase: '#080C0C',
-  bgSurface: '#0E1414',
-  surface: '#101414',
-  surfaceContainerLowest: '#0B0F0F',
-  surfaceContainerLow: '#181C1C',
-  surfaceContainer: '#1C2020',
-  surfaceContainerHigh: '#272B2B',
-  surfaceContainerHighest: '#313635',
-  surfaceBright: '#363A3A',
+  bgBase: '#F8FAFA',
+  bgSurface: '#FFFFFF',
+  surface: '#FFFFFF',
+  surfaceContainerLowest: '#FFFFFF',
+  surfaceContainerLow: '#F1F5F5',
+  surfaceContainer: '#E2E8E8',
+  surfaceContainerHigh: '#D1DBDB',
+  surfaceContainerHighest: '#BFCACA',
+  surfaceBright: '#FAFCFC',
 
-  primary: '#62ECDB',
-  primaryContainer: '#3ECFBF',
-  primaryFixedDim: '#4EDBCB',
-  onPrimary: '#003732',
+  primary: '#0D766E', // Deeper Luxe Teal
+  primaryContainer: '#0D9488', // Use this for backgrounds of some sections
+  primaryFixedDim: '#2DD4BF',
+  onPrimary: '#FFFFFF',
 
-  secondary: '#A8CECB',
-  onSecondaryContainer: '#97BCBA',
-  secondaryContainer: '#294D4B',
+  secondary: '#134E4A',
+  onSecondaryContainer: '#134E4A',
+  secondaryContainer: '#CCFBF1',
 
-  danger: '#E05C5C',
-  dangerMuted: 'rgba(224, 92, 92, 0.1)',
-  dangerBorder: 'rgba(224, 92, 92, 0.4)',
-  warningOrange: '#C4854A',
+  danger: '#DC2626',
+  dangerMuted: 'rgba(220, 38, 38, 0.08)',
+  dangerBorder: 'rgba(220, 38, 38, 0.3)',
+  warningOrange: '#EA580C',
 
-  errorContainer: '#93000A',
-  error: '#FFB4AB',
+  errorContainer: '#FEE2E2',
+  error: '#B91C1C',
 
-  textPrimary: '#EFF6F5',
-  textSecondary: '#6B8F8D',
-  textMuted: '#97BCBA',
-  textDark: '#334443',
-  onSurface: '#E0E3E2',
-  onSurfaceVariant: '#BBCAC6',
+  textPrimary: '#0F172A', // Slate 900
+  textSecondary: '#334155', // Slate 700
+  textMuted: '#64748B', // Slate 500
+  textDark: '#020617', // Slate 950
+  onSurface: '#1E293B',
+  onSurfaceVariant: '#475569',
 
-  outline: '#859490',
-  outlineVariant: '#3C4947',
-  border: '#1E2E2D',
-  sheetBg: '#141D1D',
-  handleBg: '#1E2E2D',
+  outline: '#94A3B8',
+  outlineVariant: '#E2E8F0',
+  border: '#E2E8F0',
+  sheetBg: '#FFFFFF',
+  handleBg: '#CBD5E1',
 
-  trashIconBg: '#1A3F3C',
+  trashIconBg: '#FEE2E2',
 } as const;
 
 export const Typography = {
@@ -86,16 +86,16 @@ export const Radii = {
 
 export const Shadows = {
   surgicalGlow: {
-    shadowColor: '#3ECFBF',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.08,
-    shadowRadius: 40,
+    shadowColor: '#0D9488',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
     elevation: 4,
   },
   sheetShadow: {
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: -8 },
-    shadowOpacity: 0.5,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.06,
     shadowRadius: 24,
     elevation: 16,
   },

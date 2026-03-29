@@ -62,9 +62,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     alignItems: 'center',
     paddingTop: 10,
-    backgroundColor: 'rgba(16, 20, 20, 0.95)',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(49, 54, 53, 0.4)',
+    borderTopColor: Colors.border,
   },
   tab: {
     alignItems: 'center',
@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   tabActive: {
-    backgroundColor: 'rgba(62, 207, 191, 0.1)',
+    backgroundColor: 'rgba(13, 118, 110, 0.1)',
   },
   tabPressed: {
     opacity: 0.6,

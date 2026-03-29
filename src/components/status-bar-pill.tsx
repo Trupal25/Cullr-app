@@ -30,10 +30,10 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     paddingHorizontal: 16,
     paddingVertical: 6,
-    backgroundColor: 'rgba(49, 54, 53, 0.4)',
+    backgroundColor: 'rgba(15, 23, 42, 0.05)',
     borderRadius: 9999,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(60, 73, 71, 0.1)',
+    borderColor: 'rgba(15, 23, 42, 0.1)',
     gap: 12,
   },
   statusGroup: {
@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
   divider: {
     width: 1,
     height: 12,
-    backgroundColor: 'rgba(60, 73, 71, 0.3)',
+    backgroundColor: 'rgba(15, 23, 42, 0.15)',
   },
   text: {
     fontFamily: 'SpaceGrotesk_400Regular',

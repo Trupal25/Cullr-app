@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   deleteButtonPressed: {
-    backgroundColor: 'rgba(224, 92, 92, 0.2)',
+    backgroundColor: 'rgba(239, 68, 68, 0.2)',
     transform: [{ scale: 0.98 }],
   },
   deleteButtonDisabled: {
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(60, 73, 71, 0.1)',
+    borderTopColor: 'rgba(15, 23, 42, 0.1)',
   },
   statusText: {
     fontFamily: 'SpaceGrotesk_400Regular',

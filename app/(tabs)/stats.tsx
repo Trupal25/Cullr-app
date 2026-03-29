@@ -26,7 +26,7 @@ export default function StatsScreen(): React.JSX.Element {
           {/* Storage Saved */}
           <View style={[styles.card, styles.cardLarge]}>
             <View style={styles.cardIcon}>
-              <MaterialIcons name="storage" size={24} color={Colors.primaryContainer} />
+              <MaterialIcons name="storage" size={24} color={Colors.primary} />
             </View>
             <View style={styles.cardValueContainer}>
               <Text style={styles.cardValue}>{formatMB(stats.totalMBFreed)}</Text>
@@ -111,8 +111,8 @@ const styles = StyleSheet.create({
   cardLarge: {
     width: '100%',
     padding: 24,
-    backgroundColor: 'rgba(62, 207, 191, 0.05)',
-    borderColor: 'rgba(62, 207, 191, 0.2)',
+    backgroundColor: 'rgba(13, 118, 110, 0.08)',
+    borderColor: 'rgba(13, 118, 110, 0.2)',
   },
   cardWide: {
     width: '100%',
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    backgroundColor: 'rgba(15, 23, 42, 0.05)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
   cardValue: {
     fontFamily: 'SpaceGrotesk_700Bold',
     fontSize: 40,
-    color: Colors.primaryContainer,
+    color: Colors.primary,
     letterSpacing: -1,
   },
   cardValueSmall: {

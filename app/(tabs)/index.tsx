@@ -197,7 +197,7 @@ export default function ScanHomeScreen(): React.JSX.Element {
                 ]}
               >
                 <Animated.View style={[styles.pulseRing, pulseStyle]} />
-                <MaterialIcons name="photo-camera" size={36} color={Colors.primaryContainer} />
+                <MaterialIcons name="photo-camera" size={36} color={Colors.primary} />
               </Pressable>
 
               <View style={styles.scanTextContainer}>
@@ -417,7 +417,7 @@ const styles = StyleSheet.create({
     borderRadius: 70,
     backgroundColor: Colors.bgSurface,
     borderWidth: 1,
-    borderColor: 'rgba(62, 207, 191, 0.4)',
+    borderColor: 'rgba(13, 118, 110, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#3ECFBF',
@@ -438,7 +438,7 @@ const styles = StyleSheet.create({
     height: 140,
     borderRadius: 70,
     borderWidth: 1,
-    borderColor: 'rgba(62, 207, 191, 0.1)',
+    borderColor: 'rgba(13, 118, 110, 0.1)',
   },
   progressContainer: {
     alignItems: 'center',
@@ -549,8 +549,8 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   optionCardSelected: {
-    borderColor: 'rgba(62, 207, 191, 0.5)',
-    backgroundColor: 'rgba(62, 207, 191, 0.04)',
+    borderColor: 'rgba(13, 118, 110, 0.3)',
+    backgroundColor: 'rgba(13, 118, 110, 0.05)',
   },
   optionCardPressed: {
     transform: [{ scale: 0.97 }],
@@ -599,8 +599,8 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   typeCardSelected: {
-    borderColor: 'rgba(62, 207, 191, 0.5)',
-    backgroundColor: 'rgba(62, 207, 191, 0.04)',
+    borderColor: 'rgba(13, 118, 110, 0.3)',
+    backgroundColor: 'rgba(13, 118, 110, 0.05)',
   },
   typeCardPressed: {
     transform: [{ scale: 0.98 }],
@@ -677,7 +677,7 @@ const styles = StyleSheet.create({
     gap: 10,
     marginTop: 16,
     paddingVertical: 16,
-    backgroundColor: Colors.primaryContainer,
+    backgroundColor: Colors.primary,
     borderRadius: 14,
   },
   startScanButtonPressed: {

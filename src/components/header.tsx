@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: Colors.surface,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(49, 54, 53, 0.3)',
+    borderBottomColor: Colors.border,
   },
   inner: {
     height: 56,
@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   iconButtonPressed: {
-    backgroundColor: 'rgba(62, 207, 191, 0.08)',
+    backgroundColor: 'rgba(13, 118, 110, 0.08)', // new deeper primary teal with opacity
   },
   logo: {
     fontFamily: 'SpaceGrotesk_700Bold',

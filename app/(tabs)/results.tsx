@@ -407,8 +407,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
   },
   filterChipActive: {
-    backgroundColor: Colors.primaryContainer,
-    borderColor: Colors.primaryContainer,
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   filterText: {
     fontFamily: 'SpaceGrotesk_400Regular',
@@ -442,7 +442,7 @@ const styles = StyleSheet.create({
   gridImage: {
     width: '100%',
     height: '100%',
-    opacity: 0.7,
+    opacity: 1,
   },
   badge: {
     position: 'absolute',
@@ -460,7 +460,7 @@ const styles = StyleSheet.create({
   },
   selectionOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(62, 207, 191, 0.1)',
+    backgroundColor: 'rgba(13, 118, 110, 0.12)',
   },
   selectHotspot: {
     position: 'absolute',
@@ -475,8 +475,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 10,
-    borderWidth: 1,
-    borderColor: 'transparent',
+    borderWidth: 1.5,
+    borderColor: Colors.surface,
   },
   checkmarkUnselected: {
     backgroundColor: 'rgba(0, 0, 0, 0.3)',
@@ -693,8 +693,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.4)',
   },
   viewerSelectBtnActive: {
-    borderColor: Colors.primaryContainer,
-    backgroundColor: 'rgba(62, 207, 191, 0.1)',
+    borderColor: Colors.primary,
+    backgroundColor: 'rgba(13, 118, 110, 0.15)',
   },
   viewerSelectText: {
     fontFamily: 'SpaceGrotesk_700Bold',
@@ -704,6 +704,6 @@ const styles = StyleSheet.create({
     color: '#FFF',
   },
   viewerSelectTextActive: {
-    color: Colors.primaryContainer,
+    color: Colors.primary,
   },
 });

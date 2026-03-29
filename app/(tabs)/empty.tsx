@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     borderRadius: 100,
-    backgroundColor: 'rgba(62, 207, 191, 0.05)',
+    backgroundColor: 'rgba(13, 118, 110, 0.05)',
   },
   zeroText: {
     fontFamily: 'SpaceGrotesk_700Bold',
@@ -167,12 +167,12 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: 'rgba(60, 73, 71, 0.3)',
+    borderColor: 'rgba(15, 23, 42, 0.08)',
     marginTop: 16,
   },
   scanButtonPressed: {
-    borderColor: 'rgba(62, 207, 191, 0.5)',
-    backgroundColor: 'rgba(62, 207, 191, 0.03)',
+    borderColor: 'rgba(13, 118, 110, 0.5)',
+    backgroundColor: 'rgba(13, 118, 110, 0.03)',
   },
   scanButtonText: {
     fontFamily: 'SpaceGrotesk_500Medium',

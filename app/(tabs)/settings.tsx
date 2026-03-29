@@ -60,7 +60,7 @@ export default function SettingsScreen(): React.JSX.Element {
               value={hapticsEnabled}
               onValueChange={setHapticsEnabled}
               trackColor={{ false: Colors.surfaceContainerHighest, true: Colors.primaryContainer }}
-              thumbColor="#FFFFFF"
+              thumbColor={Colors.surface}
               ios_backgroundColor={Colors.surfaceContainerHighest}
             />
           </View>
@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   settingRowPressed: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'rgba(15, 23, 42, 0.05)',
   },
   settingInfo: {
     flexDirection: 'row',
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
     marginLeft: 56, // Align with text
   },
   proBadge: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(15, 23, 42, 0.05)',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,

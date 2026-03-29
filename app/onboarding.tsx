@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
     width: 140,
     height: 140,
     borderWidth: 1,
-    borderColor: 'rgba(62, 207, 191, 0.1)',
+    borderColor: 'rgba(13, 118, 110, 0.1)',
     borderRadius: 12,
   },
   square1: {
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 9999,
     borderWidth: 1,
-    borderColor: 'rgba(60, 73, 71, 0.2)',
+    borderColor: 'rgba(15, 23, 42, 0.08)',
   },
   middleSection: {
     flex: 1.5,
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
   featureDescription: {
     fontFamily: 'Inter_400Regular',
     fontSize: 13,
-    color: 'rgba(107, 143, 141, 0.6)',
+    color: 'rgba(55, 65, 81, 0.7)',
     lineHeight: 18,
   },
   bottomSection: {
@@ -230,9 +230,7 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingVertical: 16,
     paddingHorizontal: 24,
-    backgroundColor: Colors.bgSurface,
-    borderWidth: 1,
-    borderColor: Colors.primaryContainer,
+    backgroundColor: Colors.primary,
     borderRadius: 8,
     alignItems: 'center',
     shadowColor: '#3ECFBF',
@@ -243,15 +241,15 @@ const styles = StyleSheet.create({
   },
   ctaButtonPressed: {
     transform: [{ scale: 0.98 }],
-    backgroundColor: 'rgba(62, 207, 191, 0.05)',
+    backgroundColor: 'rgba(13, 118, 110, 0.05)',
   },
   ctaButtonDisabled: {
     opacity: 0.5,
   },
   ctaText: {
-    fontFamily: 'SpaceGrotesk_400Regular',
-    fontSize: 13,
-    color: Colors.primaryContainer,
+    fontFamily: 'SpaceGrotesk_700Bold',
+    fontSize: 14,
+    color: Colors.onPrimary,
     letterSpacing: 2,
     textTransform: 'uppercase',
   },
