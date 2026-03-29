@@ -17,6 +17,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Header } from '../../src/components/header';
+import { UndoSnackbar } from '../../src/components/undo-snackbar';
 import { useScanStore } from '../../src/store/scan-store';
 import { computeTotalBytes, formatMB } from '../../src/services/scan-orchestrator';
 import { Colors } from '../../src/theme';
@@ -365,6 +366,9 @@ export default function ResultsScreen(): React.JSX.Element {
           </View>
         )}
       </Modal>
+
+      {/* ── Undo Snackbar (floats over the results grid) ── */}
+      <UndoSnackbar />
     </SafeAreaView>
   );
 }

@@ -1,9 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import * as MediaLibrary from 'expo-media-library';
 import * as Haptics from 'expo-haptics';
 import { useScanStore } from '../src/store/scan-store';
 import { formatMB } from '../src/services/scan-orchestrator';
@@ -11,7 +10,7 @@ import { Colors } from '../src/theme';
 
 export default function DeleteConfirmScreen(): React.JSX.Element {
   const router = useRouter();
-  const { state, removeDeleted, updateStats } = useScanStore();
+  const { state, stageDeletion } = useScanStore();
   const [deleting, setDeleting] = useState(false);
 
   const selectedResults = useMemo(
@@ -25,32 +24,16 @@ export default function DeleteConfirmScreen(): React.JSX.Element {
     [selectedResults]
   );
 
-  const handleDelete = async (): Promise<void> => {
+  const handleDelete = (): void => {
     if (deleting || selectedCount === 0) return;
 
     setDeleting(true);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
 
-    try {
-      const assetIds = selectedResults.map((r) => r.asset.id);
-      const success = await MediaLibrary.deleteAssetsAsync(assetIds);
-
-      if (success) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        removeDeleted(assetIds);
-        updateStats({
-          totalDeleted: state.stats.totalDeleted + selectedCount,
-          totalMBFreed: state.stats.totalMBFreed + selectedBytes / (1024 * 1024),
-        });
-        router.back();
-      } else {
-        Alert.alert('Delete Failed', 'Some images could not be deleted. They may be in a protected album.');
-        setDeleting(false);
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Something went wrong while deleting images.');
-      setDeleting(false);
-    }
+    // Stage the items for deferred deletion — UndoSnackbar will handle
+    // the actual MediaLibrary call after the 6-second undo window.
+    stageDeletion(selectedResults);
+    router.back();
   };
 
   const handleCancel = (): void => {
@@ -83,7 +66,7 @@ export default function DeleteConfirmScreen(): React.JSX.Element {
             </Text>
 
             <Text style={styles.bodyText}>
-              Permanently removes them from your gallery and iCloud. This cannot be undone.
+              Images will be moved to your system Trash. You have 6 seconds to undo before they are removed.
             </Text>
 
             <View style={styles.statRow}>
@@ -106,7 +89,7 @@ export default function DeleteConfirmScreen(): React.JSX.Element {
                 ]}
               >
                 <Text style={styles.deleteButtonText}>
-                  {deleting ? 'Deleting...' : 'Delete Permanently'}
+                  Delete {selectedCount} image{selectedCount !== 1 ? 's' : ''}
                 </Text>
               </Pressable>
               <Pressable

@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Header } from '../../src/components/header';
 import { BottomNav } from '../../src/components/bottom-nav';
+import { UndoSnackbar } from '../../src/components/undo-snackbar';
 import { useScanStore } from '../../src/store/scan-store';
 import { formatMB } from '../../src/services/scan-orchestrator';
 import { Colors } from '../../src/theme';
@@ -65,6 +66,7 @@ export default function StatsScreen(): React.JSX.Element {
         </View>
       </ScrollView>
 
+      <UndoSnackbar />
       <BottomNav activeTab="stats" />
     </SafeAreaView>
   );

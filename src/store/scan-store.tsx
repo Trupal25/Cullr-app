@@ -12,6 +12,7 @@ type ScanState = {
   scanPhaseLabel: string;
   scanResults: ScoredResult[];
   selectedIds: Set<string>;
+  pendingDeletions: ScoredResult[]; // Staged for deletion — the "undo window"
   stats: ScanStats;
   lastScanType: ScanType;
   isHydrated: boolean;
@@ -27,6 +28,9 @@ type ScanAction =
   | { type: 'SELECT_ALL' }
   | { type: 'DESELECT_ALL' }
   | { type: 'REMOVE_DELETED'; deletedIds: string[] }
+  | { type: 'STAGE_DELETION'; items: ScoredResult[] }
+  | { type: 'UNDO_DELETION' }
+  | { type: 'COMMIT_DELETION'; stats: Partial<ScanStats> }
   | { type: 'UPDATE_STATS'; stats: Partial<ScanStats> }
   | { type: 'SET_SCAN_TYPE'; scanType: ScanType }
   | { type: 'CLEAR_RESULTS' };
@@ -46,6 +50,7 @@ const initialState: ScanState = {
   scanPhaseLabel: '',
   scanResults: [],
   selectedIds: new Set(),
+  pendingDeletions: [],
   stats: DEFAULT_STATS,
   lastScanType: 'metadata',
   isHydrated: false,
@@ -92,12 +97,46 @@ function reducer(state: ScanState, action: ScanAction): ScanState {
       }
       return { ...state, scanResults: filtered, selectedIds: nextSelected };
     }
+
+    // ── Undo Delete Flow ──────────────────────────────────────────
+
+    // Move selected items out of scanResults into the pending "undo" queue.
+    // The UI immediately reflects the removal; the actual system delete is deferred.
+    case 'STAGE_DELETION': {
+      const stagedIds = new Set(action.items.map((r) => r.asset.id));
+      const remaining = state.scanResults.filter((r) => !stagedIds.has(r.asset.id));
+      const nextSelected = new Set(state.selectedIds);
+      for (const id of stagedIds) nextSelected.delete(id);
+      return {
+        ...state,
+        scanResults: remaining,
+        pendingDeletions: action.items,
+        selectedIds: nextSelected,
+      };
+    }
+
+    // User hit "Undo" — put items back into the results list.
+    case 'UNDO_DELETION':
+      return {
+        ...state,
+        scanResults: [...state.pendingDeletions, ...state.scanResults],
+        pendingDeletions: [],
+      };
+
+    // Timer expired & MediaLibrary call succeeded — finalize stats, clear queue.
+    case 'COMMIT_DELETION':
+      return {
+        ...state,
+        pendingDeletions: [],
+        stats: { ...state.stats, ...action.stats },
+      };
+
     case 'UPDATE_STATS':
       return { ...state, stats: { ...state.stats, ...action.stats } };
     case 'SET_SCAN_TYPE':
       return { ...state, lastScanType: action.scanType };
     case 'CLEAR_RESULTS':
-      return { ...state, scanResults: [], selectedIds: new Set(), scanStatus: 'idle', scanProgress: 0 };
+      return { ...state, scanResults: [], selectedIds: new Set(), pendingDeletions: [], scanStatus: 'idle', scanProgress: 0 };
     default:
       return state;
   }
@@ -114,6 +153,9 @@ type ScanContextType = {
   selectAll: () => void;
   deselectAll: () => void;
   removeDeleted: (ids: string[]) => void;
+  stageDeletion: (items: ScoredResult[]) => void;
+  undoDeletion: () => void;
+  commitDeletion: (stats: Partial<ScanStats>) => void;
   updateStats: (stats: Partial<ScanStats>) => void;
   clearResults: () => void;
 };
@@ -187,6 +229,18 @@ export function ScanProvider({ children }: { children: React.ReactNode }): React
     dispatch({ type: 'REMOVE_DELETED', deletedIds: ids });
   }, []);
 
+  const stageDeletion = useCallback((items: ScoredResult[]) => {
+    dispatch({ type: 'STAGE_DELETION', items });
+  }, []);
+
+  const undoDeletion = useCallback(() => {
+    dispatch({ type: 'UNDO_DELETION' });
+  }, []);
+
+  const commitDeletion = useCallback((stats: Partial<ScanStats>) => {
+    dispatch({ type: 'COMMIT_DELETION', stats });
+  }, []);
+
   const clearResults = useCallback(() => {
     dispatch({ type: 'CLEAR_RESULTS' });
   }, []);
@@ -202,6 +256,9 @@ export function ScanProvider({ children }: { children: React.ReactNode }): React
     selectAll,
     deselectAll,
     removeDeleted,
+    stageDeletion,
+    undoDeletion,
+    commitDeletion,
     updateStats,
     clearResults,
   };
