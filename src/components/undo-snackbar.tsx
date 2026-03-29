@@ -7,61 +7,60 @@ import { useScanStore } from '../store/scan-store';
 import { formatMB } from '../services/scan-orchestrator';
 import { Colors } from '../theme';
 
-const UNDO_DURATION_MS = 6000; // 6 seconds
+const UNDO_DURATION_MS = 6000;
 
 export function UndoSnackbar(): React.JSX.Element | null {
   const { state, undoDeletion, commitDeletion } = useScanStore();
   const { pendingDeletions } = state;
 
-  // Animated values
   const progressAnim = useRef(new Animated.Value(1)).current;
-  const slideAnim = useRef(new Animated.Value(80)).current;
+  const slideAnim   = useRef(new Animated.Value(80)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
 
-  // Refs to safely cancel timers on undo
-  const commitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const progressAnimRef = useRef<Animated.CompositeAnimation | null>(null);
+  const commitTimerRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const progressAnimRef  = useRef<Animated.CompositeAnimation | null>(null);
 
   const hasPending = pendingDeletions.length > 0;
 
-  // Reset + re-animate whenever a new batch of pending deletions arrives
   useEffect(() => {
     if (!hasPending) {
-      // Slide out
       Animated.parallel([
-        Animated.timing(slideAnim, { toValue: 80, duration: 280, useNativeDriver: true }),
-        Animated.timing(opacityAnim, { toValue: 0, duration: 280, useNativeDriver: true }),
+        Animated.timing(slideAnim,   { toValue: 80, duration: 260, useNativeDriver: true }),
+        Animated.timing(opacityAnim, { toValue: 0,  duration: 220, useNativeDriver: true }),
       ]).start();
       return;
     }
 
-    // Clear any previous timers
-    if (commitTimerRef.current) clearTimeout(commitTimerRef.current);
+    if (commitTimerRef.current)  clearTimeout(commitTimerRef.current);
     if (progressAnimRef.current) progressAnimRef.current.stop();
     progressAnim.setValue(1);
 
-    // Slide in
+    // Slide up with a light spring
     Animated.parallel([
-      Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, damping: 20, stiffness: 200 }),
-      Animated.timing(opacityAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        useNativeDriver: true,
+        damping: 22,
+        stiffness: 220,
+        mass: 0.9,
+      }),
+      Animated.timing(opacityAnim, { toValue: 1, duration: 180, useNativeDriver: true }),
     ]).start();
 
-    // Drain the progress bar over UNDO_DURATION_MS
+    // Drain the teal progress bar
     progressAnimRef.current = Animated.timing(progressAnim, {
       toValue: 0,
       duration: UNDO_DURATION_MS,
-      useNativeDriver: false, // must be false for width animation
+      useNativeDriver: false,
     });
     progressAnimRef.current.start();
 
-    // After timeout: commit the deletion for real
     commitTimerRef.current = setTimeout(async () => {
-      const items = pendingDeletions; // capture snapshot
+      const items = pendingDeletions;
       if (items.length === 0) return;
-
       try {
-        const assetIds = items.map((r) => r.asset.id);
-        const success = await MediaLibrary.deleteAssetsAsync(assetIds);
+        const assetIds  = items.map((r) => r.asset.id);
+        const success   = await MediaLibrary.deleteAssetsAsync(assetIds);
         if (success) {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           const totalBytes = items.reduce((sum, r) => sum + r.asset.fileSize, 0);
@@ -70,7 +69,6 @@ export function UndoSnackbar(): React.JSX.Element | null {
             totalMBFreed: state.stats.totalMBFreed + totalBytes / (1024 * 1024),
           });
         } else {
-          // If delete fails, quietly restore the items
           undoDeletion();
         }
       } catch {
@@ -79,27 +77,24 @@ export function UndoSnackbar(): React.JSX.Element | null {
     }, UNDO_DURATION_MS);
 
     return () => {
-      if (commitTimerRef.current) clearTimeout(commitTimerRef.current);
+      if (commitTimerRef.current)  clearTimeout(commitTimerRef.current);
       if (progressAnimRef.current) progressAnimRef.current.stop();
     };
-    // intentionally only re-run when hasPending flips or a new batch arrives
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingDeletions]);
 
   const handleUndo = useCallback(() => {
-    if (commitTimerRef.current) clearTimeout(commitTimerRef.current);
+    if (commitTimerRef.current)  clearTimeout(commitTimerRef.current);
     if (progressAnimRef.current) progressAnimRef.current.stop();
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     undoDeletion();
   }, [undoDeletion]);
 
-  if (!hasPending) return null;
-
   const totalBytes = pendingDeletions.reduce((sum, r) => sum + r.asset.fileSize, 0);
-  const count = pendingDeletions.length;
+  const count      = pendingDeletions.length;
 
   const progressBarWidth = progressAnim.interpolate({
-    inputRange: [0, 1],
+    inputRange:  [0, 1],
     outputRange: ['0%', '100%'],
   });
 
@@ -109,31 +104,43 @@ export function UndoSnackbar(): React.JSX.Element | null {
         styles.container,
         { transform: [{ translateY: slideAnim }], opacity: opacityAnim },
       ]}
+      pointerEvents={hasPending ? 'auto' : 'none'}
     >
-      {/* Timed progress bar — drains left to right */}
-      <View style={styles.progressTrack}>
-        <Animated.View style={[styles.progressBar, { width: progressBarWidth }]} />
+      {/* ── Teal countdown bar runs along the top edge ── */}
+      <View style={styles.timerTrack}>
+        <Animated.View style={[styles.timerFill, { width: progressBarWidth }]} />
       </View>
 
-      <View style={styles.row}>
-        <View style={styles.iconWrap}>
-          <MaterialIcons name="delete-outline" size={18} color={Colors.danger} />
+      <View style={styles.body}>
+
+        {/* Left: status icon */}
+        <View style={styles.iconCircle}>
+          <MaterialIcons name="delete-sweep" size={20} color={Colors.danger} />
         </View>
 
-        <View style={styles.textGroup}>
-          <Text style={styles.title} numberOfLines={1}>
-            {count} image{count !== 1 ? 's' : ''} deleted
+        {/* Centre: message block */}
+        <View style={styles.textBlock}>
+          <Text style={styles.label} numberOfLines={1}>
+            {count} image{count !== 1 ? 's' : ''} removed
           </Text>
-          <Text style={styles.subtitle}>{formatMB(totalBytes)} freed · moves to system trash</Text>
+          <Text style={styles.meta}>
+            {formatMB(totalBytes)} · tap Undo to restore
+          </Text>
         </View>
 
+        {/* Right: primary action */}
         <Pressable
           onPress={handleUndo}
-          style={({ pressed }) => [styles.undoButton, pressed && styles.undoButtonPressed]}
-          hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+          style={({ pressed }) => [
+            styles.undoBtn,
+            pressed && styles.undoBtnPressed,
+          ]}
+          hitSlop={{ top: 14, bottom: 14, left: 8, right: 8 }}
         >
-          <Text style={styles.undoText}>Undo</Text>
+          <MaterialIcons name="undo" size={14} color={Colors.onPrimary} style={styles.undoIcon} />
+          <Text style={styles.undoLabel}>Undo</Text>
         </Pressable>
+
       </View>
     </Animated.View>
   );
@@ -142,74 +149,94 @@ export function UndoSnackbar(): React.JSX.Element | null {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 96,          // sits above the bottom nav / action bar
+    bottom: 100,
     left: 16,
     right: 16,
-    backgroundColor: Colors.textDark,
-    borderRadius: 12,
+    backgroundColor: Colors.bgSurface,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: Colors.border,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 24,
-    elevation: 20,
+    // Crisp layered shadow matching the sheet look
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.10,
+    shadowRadius: 20,
+    elevation: 12,
   },
-  progressTrack: {
-    height: 2,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+
+  // ── Timer bar ──────────────────────────────────────────────────
+  timerTrack: {
+    height: 3,
+    backgroundColor: Colors.outlineVariant,
   },
-  progressBar: {
+  timerFill: {
     height: '100%',
-    backgroundColor: Colors.danger,
+    backgroundColor: Colors.primary,
+    borderBottomRightRadius: 2,
   },
-  row: {
+
+  // ── Content row ────────────────────────────────────────────────
+  body: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     gap: 12,
   },
-  iconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(220, 38, 38, 0.12)',
+
+  // Delete icon badge
+  iconCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: Colors.trashIconBg,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
   },
-  textGroup: {
+
+  // Text column
+  textBlock: {
     flex: 1,
-    gap: 2,
+    gap: 3,
   },
-  title: {
+  label: {
     fontFamily: 'SpaceGrotesk_600SemiBold',
     fontSize: 14,
-    color: '#FFFFFF',
+    color: Colors.textPrimary,
     letterSpacing: -0.2,
   },
-  subtitle: {
+  meta: {
     fontFamily: 'SpaceGrotesk_400Regular',
     fontSize: 10,
-    color: 'rgba(255,255,255,0.5)',
-    letterSpacing: 0.5,
+    color: Colors.textMuted,
+    letterSpacing: 0.4,
     textTransform: 'uppercase',
   },
-  undoButton: {
+
+  // Teal Undo button
+  undoBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
     paddingHorizontal: 14,
-    paddingVertical: 8,
-    backgroundColor: Colors.primaryContainer,
-    borderRadius: 6,
+    paddingVertical: 9,
+    backgroundColor: Colors.primary,
+    borderRadius: 8,
     flexShrink: 0,
   },
-  undoButtonPressed: {
-    opacity: 0.75,
+  undoBtnPressed: {
+    opacity: 0.82,
     transform: [{ scale: 0.96 }],
   },
-  undoText: {
+  undoIcon: {
+    marginTop: 1,
+  },
+  undoLabel: {
     fontFamily: 'SpaceGrotesk_700Bold',
     fontSize: 13,
-    color: '#FFFFFF',
-    letterSpacing: 0.5,
+    color: Colors.onPrimary,
+    letterSpacing: 0.2,
   },
 });

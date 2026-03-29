@@ -177,7 +177,7 @@ export default function ResultsScreen(): React.JSX.Element {
   }), []);
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
+    <SafeAreaView style={styles.safeArea} edges={['left', 'right', 'bottom']}>
       <Header />
 
       <View style={styles.summaryStrip}>
@@ -221,15 +221,6 @@ export default function ResultsScreen(): React.JSX.Element {
         />
       </View>
 
-      {selectedCount > 0 && (
-        <View style={styles.selectionPill}>
-          <View style={styles.pulseDot} />
-          <Text style={styles.selectionPillText}>
-            Selection Active: {selectedCount}/{totalItems} items
-          </Text>
-        </View>
-      )}
-
       <View style={styles.actionBar}>
         <Pressable 
           onPress={selectedCount === totalItems ? deselectAll : handleSelectAll} 
@@ -252,6 +243,15 @@ export default function ResultsScreen(): React.JSX.Element {
           </Text>
         </Pressable>
       </View>
+
+      {selectedCount > 0 && (
+        <View style={styles.selectionPill}>
+          <View style={styles.pulseDot} />
+          <Text style={styles.selectionPillText}>
+            {selectedCount} item{selectedCount !== 1 ? 's' : ''} selected
+          </Text>
+        </View>
+      )}
 
       {/* ── Full-Screen Image Viewer with Swipe ── */}
       <Modal
@@ -298,7 +298,7 @@ export default function ResultsScreen(): React.JSX.Element {
 
             {/* Swipe hint */}
             {filteredItems.length > 1 && (
-              <View style={styles.swipeHint}>
+              <View style={styles.swipeHint} pointerEvents="none">
                 <MaterialIcons name="swipe" size={16} color="rgba(255,255,255,0.4)" />
                 <Text style={styles.swipeHintText}>Swipe to browse</Text>
               </View>
@@ -488,17 +488,22 @@ const styles = StyleSheet.create({
   },
   selectionPill: {
     position: 'absolute',
-    bottom: 96,
+    bottom: 110, // Higher up to sit clearly above the action bar
     alignSelf: 'center',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    backgroundColor: 'rgba(49, 54, 53, 0.7)',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: Colors.bgSurface,
     borderRadius: 9999,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(60, 73, 71, 0.2)',
+    borderWidth: 1.5,
+    borderColor: Colors.primary,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
   },
   pulseDot: {
     width: 6,
@@ -507,11 +512,11 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
   },
   selectionPillText: {
-    fontFamily: 'SpaceGrotesk_400Regular',
-    fontSize: 9,
-    letterSpacing: 1,
+    fontFamily: 'SpaceGrotesk_600SemiBold',
+    fontSize: 11,
+    letterSpacing: 0.5,
     textTransform: 'uppercase',
-    color: Colors.onSurfaceVariant,
+    color: Colors.primary,
   },
   actionBar: {
     flexDirection: 'row',

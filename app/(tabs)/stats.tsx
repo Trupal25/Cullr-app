@@ -14,7 +14,7 @@ export default function StatsScreen(): React.JSX.Element {
   const { stats } = state;
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
+    <SafeAreaView style={styles.safeArea} edges={['left', 'right', 'bottom']}>
       <Header />
 
       <ScrollView contentContainerStyle={styles.content}>
