@@ -1,11 +1,11 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { useScanStore } from '../src/store/scan-store';
+import { useRouter } from 'expo-router';
+import React, { useMemo, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { formatMB } from '../src/services/scan-orchestrator';
+import { useScanStore } from '../src/store/scan-store';
 import { Colors } from '../src/theme';
 
 export default function DeleteConfirmScreen(): React.JSX.Element {
@@ -42,13 +42,7 @@ export default function DeleteConfirmScreen(): React.JSX.Element {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['bottom']}>
-      <View style={styles.overlay}>
-        <View style={styles.ghostGrid}>
-          {Array.from({ length: 6 }).map((_, i) => (
-            <View key={i} style={styles.ghostCell} />
-          ))}
-        </View>
-      </View>
+      <Pressable style={styles.overlay} onPress={handleCancel} />
 
       <View style={styles.sheetContainer}>
         <View style={styles.sheet}>
@@ -122,9 +116,7 @@ const styles = StyleSheet.create({
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: Colors.bgBase,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: 'transparent',
   },
   ghostGrid: {
     width: '80%',

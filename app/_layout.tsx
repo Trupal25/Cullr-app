@@ -1,21 +1,21 @@
-import React, { useEffect } from 'react';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import * as SplashScreen from 'expo-splash-screen';
-import {
-  useFonts,
-  SpaceGrotesk_300Light,
-  SpaceGrotesk_400Regular,
-  SpaceGrotesk_500Medium,
-  SpaceGrotesk_600SemiBold,
-  SpaceGrotesk_700Bold,
-} from '@expo-google-fonts/space-grotesk';
 import {
   Inter_300Light,
   Inter_400Regular,
   Inter_500Medium,
   Inter_600SemiBold,
 } from '@expo-google-fonts/inter';
+import {
+  SpaceGrotesk_300Light,
+  SpaceGrotesk_400Regular,
+  SpaceGrotesk_500Medium,
+  SpaceGrotesk_600SemiBold,
+  SpaceGrotesk_700Bold,
+  useFonts,
+} from '@expo-google-fonts/space-grotesk';
+import { Stack } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar } from 'expo-status-bar';
+import React, { useEffect } from 'react';
 import { ScanProvider, useScanStore } from '../src/store/scan-store';
 import { Colors } from '../src/theme';
 
@@ -42,9 +42,9 @@ function RootNavigator(): React.JSX.Element | null {
       <Stack.Screen
         name="delete-confirm"
         options={{
-          presentation: 'containedTransparentModal',
-          animation: 'slide_from_bottom',
-          contentStyle: { backgroundColor: 'transparent' },
+        presentation: 'transparentModal',
+        animation: 'slide_from_bottom',
+        contentStyle: { backgroundColor: 'transparent' },
         }}
       />
     </Stack>
