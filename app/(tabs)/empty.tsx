@@ -16,6 +16,7 @@ export default function EmptyStateScreen(): React.JSX.Element {
   const router = useRouter();
   const { setScanStatus, setScanProgress, setResults, updateStats, state } = useScanStore();
   const { requestPermission, status: permissionStatus } = useMediaPermission();
+  const { lastScanType, stats } = state;
 
   const handleScanAgain = useCallback(async (): Promise<void> => {
     if (permissionStatus !== 'granted') {
@@ -30,18 +31,18 @@ export default function EmptyStateScreen(): React.JSX.Element {
     setScanStatus('scanning');
 
     try {
-      const results = await runScan(
+      const { results, totalScanned } = await runScan(
         (label, progress) => {
           setScanProgress(progress, label);
         },
-        { type: state.lastScanType, range: 'all' } // Default range 'all' if not stored, but type matches the previous mode
+        { type: lastScanType, range: 'all' }
       );
 
       setResults(results);
       updateStats({
         lastScanDate: new Date().toISOString(),
-        totalScanned: results.length,
-        totalFlagged: results.length,
+        totalScanned: stats.totalScanned + totalScanned,
+        totalFlagged: stats.totalFlagged + results.length,
       });
 
       if (results.length > 0) {
@@ -53,7 +54,18 @@ export default function EmptyStateScreen(): React.JSX.Element {
       setScanStatus('idle');
       Alert.alert('Scan Error', 'Something went wrong while scanning.');
     }
-  }, [permissionStatus, requestPermission, setScanStatus, setScanProgress, setResults, updateStats, router]);
+  }, [
+    lastScanType,
+    permissionStatus,
+    requestPermission,
+    router,
+    setResults,
+    setScanProgress,
+    setScanStatus,
+    stats.totalFlagged,
+    stats.totalScanned,
+    updateStats,
+  ]);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
@@ -70,7 +82,7 @@ export default function EmptyStateScreen(): React.JSX.Element {
           <View style={styles.textCluster}>
             <Text style={styles.headline}>Nothing to cull.</Text>
             <Text style={styles.subtitle}>
-              {state.lastScanType === 'source'
+              {lastScanType === 'source'
                 ? 'No messaging app images found in this range.'
                 : 'Your gallery looks clean. No spam or junk detected.'}
             </Text>

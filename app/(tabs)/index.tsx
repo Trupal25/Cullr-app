@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -47,15 +47,15 @@ type ScanTypeOption = {
 const SCAN_TYPE_OPTIONS: ScanTypeOption[] = [
   {
     value: 'metadata',
-    label: 'Spam Detection',
-    desc: 'Finds low-quality forwarded junk — compressed images, memes, chain messages',
-    icon: 'policy',
+    label: 'Smart Spam Scan',
+    desc: 'Analyzes resolution, file size & messaging patterns to find forwarded junk',
+    icon: 'auto-awesome',
   },
   {
     value: 'source',
-    label: 'Source Filter',
-    desc: 'Shows ALL images from WhatsApp, Telegram & Instagram for bulk review',
-    icon: 'filter-alt',
+    label: 'App Bulk Review',
+    desc: 'Shows ALL images from WhatsApp, Telegram & Instagram for quick triage',
+    icon: 'apps',
   },
 ];
 
@@ -74,6 +74,7 @@ export default function ScanHomeScreen(): React.JSX.Element {
     updateStats,
   } = useScanStore();
   const { requestPermission, status: permissionStatus } = useMediaPermission();
+  const stats = state.stats;
 
   const [configStep, setConfigStep] = useState<ConfigStep>('idle');
   const [selectedRange, setSelectedRange] = useState<ScanRange>(500);
@@ -81,7 +82,7 @@ export default function ScanHomeScreen(): React.JSX.Element {
 
   const pulseScale = useSharedValue(1);
 
-  React.useEffect(() => {
+  useEffect(() => {
     pulseScale.value = withRepeat(
       withTiming(1.15, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
       -1,
@@ -143,15 +144,17 @@ export default function ScanHomeScreen(): React.JSX.Element {
     setScanStatus('scanning');
 
     try {
-      const results = await runScan((label, progress) => {
+      const { results, totalScanned } = await runScan((label, progress) => {
         setScanProgress(progress, label);
       }, config);
 
       setResults(results);
+      
+      // Update cumulative all-time stats
       updateStats({
         lastScanDate: new Date().toISOString(),
-        totalScanned: results.length,
-        totalFlagged: results.length,
+        totalScanned: stats.totalScanned + totalScanned,
+        totalFlagged: stats.totalFlagged + results.length,
       });
 
       setConfigStep('idle');
@@ -161,18 +164,30 @@ export default function ScanHomeScreen(): React.JSX.Element {
       } else {
         router.push('/(tabs)/empty');
       }
-    } catch (error) {
+    } catch {
       setScanStatus('idle');
       setConfigStep('idle');
       Alert.alert('Scan Error', 'Something went wrong while scanning your gallery.');
     }
-  }, [permissionStatus, requestPermission, selectedRange, selectedType, setScanStatus, setScanProgress, setResults, updateStats, router]);
+  }, [
+    permissionStatus,
+    requestPermission,
+    router,
+    selectedRange,
+    selectedType,
+    setResults,
+    setScanProgress,
+    setScanStatus,
+    setScanType,
+    stats.totalFlagged,
+    stats.totalScanned,
+    updateStats,
+  ]);
 
-  const isScanning = configStep === 'scanning';
-  const lastScan = state.stats.lastScanDate
-    ? formatRelativeDate(state.stats.lastScanDate)
+  const lastScan = stats.lastScanDate
+    ? formatRelativeDate(stats.lastScanDate)
     : null;
-  const deletedCount = state.stats.totalDeleted;
+  const deletedCount = stats.totalDeleted;
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -397,10 +412,10 @@ const styles = StyleSheet.create({
   intelligenceLabel: {
     fontFamily: 'SpaceGrotesk_400Regular',
     fontSize: 10,
-    letterSpacing: 3,
+    letterSpacing: 1,
     textTransform: 'uppercase',
     color: Colors.textSecondary,
-    marginBottom: 8,
+    marginBottom: 5,
   },
   labelDivider: {
     width: 32,
@@ -538,7 +553,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   optionCard: {
-    width: '47%' as any,
+    width: '47%',
     backgroundColor: Colors.bgSurface,
     borderWidth: 1,
     borderColor: Colors.border,

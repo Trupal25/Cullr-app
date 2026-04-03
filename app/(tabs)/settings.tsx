@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Switch, Alert, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -9,8 +9,8 @@ import { Colors } from '../../src/theme';
 import * as Haptics from 'expo-haptics';
 
 export default function SettingsScreen(): React.JSX.Element {
-  const { state, updateStats } = useScanStore();
-  const [hapticsEnabled, setHapticsEnabled] = React.useState(true);
+  const { updateStats } = useScanStore();
+  const [hapticsEnabled, setHapticsEnabled] = useState(true);
 
   const handleResetStats = () => {
     Alert.alert(

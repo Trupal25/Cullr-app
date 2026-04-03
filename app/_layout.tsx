@@ -42,9 +42,9 @@ function RootNavigator(): React.JSX.Element | null {
       <Stack.Screen
         name="delete-confirm"
         options={{
-        presentation: 'transparentModal',
-        animation: 'slide_from_bottom',
-        contentStyle: { backgroundColor: 'transparent' },
+          presentation: 'transparentModal',
+          animation: 'slide_from_bottom',
+          contentStyle: { backgroundColor: 'transparent' },
         }}
       />
     </Stack>

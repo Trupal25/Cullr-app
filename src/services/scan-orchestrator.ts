@@ -26,7 +26,7 @@ const SCAN_MODE_LABELS: Record<ScanType, string> = {
 export async function runScan(
   onProgress?: ScanProgressCallback,
   config?: ScanConfig
-): Promise<ScoredResult[]> {
+): Promise<{ results: ScoredResult[]; totalScanned: number }> {
   const range = config?.range ?? 'all';
   const scanType = config?.type ?? 'metadata';
   const modeLabel = SCAN_MODE_LABELS[scanType];
@@ -42,7 +42,7 @@ export async function runScan(
 
   if (assets.length === 0) {
     onProgress?.('No photos found', 100);
-    return [];
+    return { results: [], totalScanned: 0 };
   }
 
   // ── Phase 2: Score with selected mode ──────────────────────────────────────
@@ -78,7 +78,7 @@ export async function runScan(
       ? 'No messaging app images found'
       : 'No spam detected';
     onProgress?.(emptyMsg, 100);
-    return [];
+    return { results: [], totalScanned: assets.length };
   }
 
   // ── Phase 3: Enrich flagged items with file sizes ──────────────────────────
@@ -103,7 +103,7 @@ export async function runScan(
     ? `Found ${results.length} messaging app images`
     : `Found ${results.length} suspicious images`;
   onProgress?.(resultLabel, 100);
-  return results;
+  return { results, totalScanned: assets.length };
 }
 
 /** Total file size in bytes across a result set. */

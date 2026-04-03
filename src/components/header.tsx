@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet, Modal, TouchableWithoutFeedback } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { Href, useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Colors } from '../theme';
@@ -11,10 +11,10 @@ export function Header(): React.JSX.Element {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const handleNav = (route: string) => {
+  const handleNav = (route: Href) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setMenuOpen(false);
-    router.push(route as any);
+    router.push(route);
   };
 
   return (
@@ -45,7 +45,12 @@ export function Header(): React.JSX.Element {
       </View>
 
       {/* Dropdown Menu Modal */}
-      <Modal visible={menuOpen} transparent animationType="fade">
+      <Modal
+        visible={menuOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMenuOpen(false)}
+      >
         <TouchableWithoutFeedback onPress={() => setMenuOpen(false)}>
           <View style={[styles.modalOverlay, { paddingTop: insets.top + 56 }]}>
             <TouchableWithoutFeedback>
