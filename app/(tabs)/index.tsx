@@ -1,6 +1,5 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -175,13 +174,8 @@ export default function ScanHomeScreen(): React.JSX.Element {
         totalFlagged: stats.totalFlagged + results.length,
       });
 
-      setConfigStep("idle");
-
-      if (results.length > 0) {
-        router.push("/(tabs)/results");
-      } else {
-        router.push("/(tabs)/empty");
-      }
+      const nextRoute = results.length > 0 ? "/(tabs)/results" : "/(tabs)/empty";
+      router.replace(nextRoute);
     } catch {
       setScanStatus("idle");
       setConfigStep("idle");
@@ -229,30 +223,33 @@ export default function ScanHomeScreen(): React.JSX.Element {
             entering={FadeIn.duration(300)}
             style={styles.centerContainer}
           >
-            <View style={styles.labelSection}>
-              <Text style={styles.intelligenceLabel}>Gallery Intelligence</Text>
-              <View style={styles.labelDivider} />
-            </View>
+            <View style={styles.idleMainBlock}>
+              <View style={styles.labelSection}>
+                <Text style={styles.intelligenceLabel}>
+                  Gallery Intelligence
+                </Text>
+                <View style={styles.labelDivider} />
+              </View>
 
-            <View style={styles.scannerSection}>
-              <Pressable
-                onPress={handleStartConfig}
-                style={({ pressed }) => [
-                  styles.scanButton,
-                  pressed && styles.scanButtonPressed,
-                ]}
-              >
-                <Animated.View style={[styles.pulseRing, pulseStyle]} />
-                <MaterialIcons
-                  name="photo-camera"
-                  size={36}
-                  color={Colors.primary}
-                />
-              </Pressable>
+              <View style={styles.scannerSection}>
+                <Pressable
+                  onPress={handleStartConfig}
+                  style={({ pressed }) => [
+                    styles.scanButton,
+                    pressed && styles.scanButtonPressed,
+                  ]}
+                >
+                  <Animated.View style={[styles.pulseRing, pulseStyle]} />
+                  <MaterialIcons
+                    name="photo-camera"
+                    size={36}
+                    color={Colors.primary}
+                  />
+                </Pressable>
 
-              <View style={styles.scanTextContainer}>
-                <Text style={styles.scanTitle}>Scan Gallery</Text>
-                <Text style={styles.scanSubtitle}>Choose what to scan </Text>
+                <View style={styles.scanTextContainer}>
+                  <Text style={styles.scanTitle}>Scan Gallery</Text>
+                </View>
               </View>
             </View>
 
@@ -478,24 +475,22 @@ export default function ScanHomeScreen(): React.JSX.Element {
         {/* Scanning state */}
         {configStep === "scanning" && (
           <Animated.View
-            entering={FadeIn.duration(260)}
-            style={styles.scanningContainer}
+            entering={FadeIn.duration(300)}
+            style={styles.centerContainer}
           >
-            <LinearGradient
-              colors={["#E9F8F6", "#F9FCFC"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.scanningCard}
-            >
-              <View style={styles.scanningDial}>
-                <Animated.View style={[styles.scanningDialPulse, pulseStyle]} />
-                <Text style={styles.progressText}>{state.scanProgress}%</Text>
+            <View style={styles.scannerSection}>
+              <View style={[styles.scanButton, styles.scanButtonScanning]}>
+                <Animated.View style={[styles.pulseRing, pulseStyle]} />
+                <View style={styles.progressContainer}>
+                  <Text style={styles.progressText}>{state.scanProgress}%</Text>
+                </View>
               </View>
-              <Text style={styles.scanningTitle}>Scanning your gallery</Text>
-              <Text style={styles.scanningSubtitle}>
-                {state.scanPhaseLabel}
-              </Text>
-            </LinearGradient>
+
+              <View style={styles.scanTextContainer}>
+                <Text style={styles.scanTitle}>Scanning...</Text>
+                <Text style={styles.scanSubtitle}>{state.scanPhaseLabel}</Text>
+              </View>
+            </View>
           </Animated.View>
         )}
       </View>
@@ -538,6 +533,10 @@ const styles = StyleSheet.create({
   },
 
   // ── Idle state ──
+  idleMainBlock: {
+    alignItems: "center",
+    transform: [{ translateY: -80 }],
+  },
   labelSection: {
     alignItems: "center",
     marginBottom: 60,
@@ -577,6 +576,9 @@ const styles = StyleSheet.create({
   scanButtonPressed: {
     transform: [{ scale: 0.95 }],
   },
+  scanButtonScanning: {
+    borderColor: Colors.primary,
+  },
   pulseRing: {
     position: "absolute",
     width: 140,
@@ -584,6 +586,15 @@ const styles = StyleSheet.create({
     borderRadius: 70,
     borderWidth: 1,
     borderColor: "rgba(13, 118, 110, 0.1)",
+  },
+  progressContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  progressText: {
+    fontFamily: "SpaceGrotesk_700Bold",
+    fontSize: 28,
+    color: Colors.primary,
   },
   scanTextContainer: {
     alignItems: "center",
@@ -611,13 +622,22 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingHorizontal: 20,
     paddingVertical: 12,
-    backgroundColor: Colors.bgSurface,
+    backgroundColor: Colors.surfaceContainerLow,
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: 8,
-    marginTop: 72,
+    borderRadius: 12,
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 108,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 2,
   },
   activityText: {
+    flex: 1,
     fontFamily: "SpaceGrotesk_400Regular",
     fontSize: 11,
     letterSpacing: 1,
@@ -632,7 +652,7 @@ const styles = StyleSheet.create({
   },
   flowScrollContent: {
     paddingTop: 8,
-    paddingBottom: 28,
+    paddingBottom: 132,
   },
   flowTopRow: {
     flexDirection: "row",
@@ -859,58 +879,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     letterSpacing: 0.5,
     color: Colors.onPrimary,
-  },
-
-  // ── Scanning state ──
-  scanningContainer: {
-    flex: 1,
-    justifyContent: "center",
-  },
-  scanningCard: {
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: "rgba(13, 118, 110, 0.12)",
-    paddingVertical: 28,
-    paddingHorizontal: 20,
-    alignItems: "center",
-    gap: 14,
-  },
-  scanningDial: {
-    width: 132,
-    height: 132,
-    borderRadius: 66,
-    borderWidth: 1,
-    borderColor: "rgba(13, 118, 110, 0.2)",
-    backgroundColor: Colors.bgSurface,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 4,
-  },
-  scanningDialPulse: {
-    position: "absolute",
-    width: 132,
-    height: 132,
-    borderRadius: 66,
-    borderWidth: 1,
-    borderColor: "rgba(13, 118, 110, 0.18)",
-  },
-  progressText: {
-    fontFamily: "SpaceGrotesk_700Bold",
-    fontSize: 32,
-    color: Colors.primary,
-    letterSpacing: -0.4,
-  },
-  scanningTitle: {
-    fontFamily: "SpaceGrotesk_700Bold",
-    fontSize: 22,
-    color: Colors.textPrimary,
-    letterSpacing: -0.3,
-  },
-  scanningSubtitle: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 14,
-    color: Colors.textSecondary,
-    textAlign: "center",
-    lineHeight: 20,
   },
 });

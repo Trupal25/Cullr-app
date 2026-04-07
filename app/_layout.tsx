@@ -74,7 +74,7 @@ export default function RootLayout(): React.JSX.Element | null {
 
   return (
     <ScanProvider>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       <RootNavigator />
     </ScanProvider>
   );
