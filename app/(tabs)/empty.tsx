@@ -2,73 +2,27 @@ import { MaterialIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import React, { useCallback } from "react";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Header } from "../../src/components/header";
-import { StatusBarPill } from "../../src/components/status-bar-pill";
-import { useMediaPermission } from "../../src/hooks/use-permissions";
-import { runScan } from "../../src/services/scan-orchestrator";
 import { useScanStore } from "../../src/store/scan-store";
 import { Colors } from "../../src/theme";
 
 export default function EmptyStateScreen(): React.JSX.Element {
   const router = useRouter();
-  const { setScanStatus, setScanProgress, setResults, updateStats, state } =
-    useScanStore();
-  const { requestPermission, status: permissionStatus } = useMediaPermission();
-  const { lastScanType, stats } = state;
+  const { state } = useScanStore();
+  const { lastScanType } = state;
 
   const handleScanAgain = useCallback(async (): Promise<void> => {
-    if (permissionStatus !== "granted") {
-      const granted = await requestPermission();
-      if (!granted) {
-        Alert.alert(
-          "Permission Required",
-          "Cullr needs access to your photo library.",
-        );
-        return;
-      }
-    }
-
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setScanStatus("scanning");
-
-    try {
-      const { results, totalScanned } = await runScan(
-        (label, progress) => {
-          setScanProgress(progress, label);
-        },
-        { type: lastScanType, range: "all" },
-      );
-
-      setResults(results);
-      updateStats({
-        lastScanDate: new Date().toISOString(),
-        totalScanned: stats.totalScanned + totalScanned,
-        totalFlagged: stats.totalFlagged + results.length,
-      });
-
-      if (results.length > 0) {
-        router.replace("/(tabs)/results");
-      }
-      // If still 0 results, we stay on this screen
-      setScanStatus("done");
-    } catch {
-      setScanStatus("idle");
-      Alert.alert("Scan Error", "Something went wrong while scanning.");
-    }
-  }, [
-    lastScanType,
-    permissionStatus,
-    requestPermission,
-    router,
-    setResults,
-    setScanProgress,
-    setScanStatus,
-    stats.totalFlagged,
-    stats.totalScanned,
-    updateStats,
-  ]);
+    router.replace({
+      pathname: "/(tabs)",
+      params: {
+        openConfig: String(Date.now()),
+        mode: lastScanType,
+      },
+    });
+  }, [lastScanType, router]);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["left", "right"]}>
@@ -106,10 +60,6 @@ export default function EmptyStateScreen(): React.JSX.Element {
             <Text style={styles.scanButtonText}>Scan Again</Text>
           </Pressable>
         </View>
-      </View>
-
-      <View style={styles.statusPillContainer}>
-        <StatusBarPill />
       </View>
     </SafeAreaView>
   );

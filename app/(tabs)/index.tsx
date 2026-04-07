@@ -1,6 +1,6 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   Alert,
@@ -81,6 +81,10 @@ type ConfigStep = "idle" | "range" | "type" | "scanning";
 
 export default function ScanHomeScreen(): React.JSX.Element {
   const router = useRouter();
+  const { openConfig, mode } = useLocalSearchParams<{
+    openConfig?: string;
+    mode?: ScanType;
+  }>();
   const {
     state,
     setScanStatus,
@@ -94,7 +98,9 @@ export default function ScanHomeScreen(): React.JSX.Element {
 
   const [configStep, setConfigStep] = useState<ConfigStep>("idle");
   const [selectedRange, setSelectedRange] = useState<ScanRange>(500);
-  const [selectedType, setSelectedType] = useState<ScanType>("metadata");
+  const [selectedType, setSelectedType] = useState<ScanType>(
+    state.lastScanType,
+  );
 
   const pulseScale = useSharedValue(1);
 
@@ -136,68 +142,83 @@ export default function ScanHomeScreen(): React.JSX.Element {
     }
   }, [configStep]);
 
-  const handleStartScan = useCallback(async (): Promise<void> => {
-    // Gate on permission
-    if (permissionStatus !== "granted") {
-      const granted = await requestPermission();
-      if (!granted) {
-        Alert.alert(
-          "Permission Required",
-          "Allow photo access to scan your library.",
-        );
-        return;
+  const startScanWithConfig = useCallback(
+    async (config: ScanConfig): Promise<void> => {
+      // Gate on permission
+      if (permissionStatus !== "granted") {
+        const granted = await requestPermission();
+        if (!granted) {
+          Alert.alert(
+            "Permission Required",
+            "Allow photo access to scan your library.",
+          );
+          return;
+        }
       }
-    }
 
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      setScanType(config.type);
+      setScanProgress(0, "Starting scan...");
+      setConfigStep("scanning");
+      setScanStatus("scanning");
+
+      try {
+        const { results, totalScanned } = await runScan((label, progress) => {
+          setScanProgress(progress, label);
+        }, config);
+
+        setResults(results);
+
+        // Update cumulative all-time stats
+        updateStats({
+          lastScanDate: new Date().toISOString(),
+          totalScanned: stats.totalScanned + totalScanned,
+          totalFlagged: stats.totalFlagged + results.length,
+        });
+
+        const nextRoute =
+          results.length > 0 ? "/(tabs)/results" : "/(tabs)/empty";
+        router.replace(nextRoute);
+      } catch {
+        setScanStatus("idle");
+        setConfigStep("idle");
+        Alert.alert(
+          "Scan Error",
+          "Something went wrong while scanning your gallery.",
+        );
+      }
+    },
+    [
+      permissionStatus,
+      requestPermission,
+      router,
+      setResults,
+      setScanProgress,
+      setScanStatus,
+      setScanType,
+      stats.totalFlagged,
+      stats.totalScanned,
+      updateStats,
+    ],
+  );
+
+  const handleStartScan = useCallback(async (): Promise<void> => {
     const config: ScanConfig = {
       range: selectedRange,
       type: selectedType,
     };
+    await startScanWithConfig(config);
+  }, [selectedRange, selectedType, startScanWithConfig]);
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setScanType(selectedType);
-    setConfigStep("scanning");
-    setScanStatus("scanning");
+  useEffect(() => {
+    if (!openConfig) return;
 
-    try {
-      const { results, totalScanned } = await runScan((label, progress) => {
-        setScanProgress(progress, label);
-      }, config);
+    const nextType: ScanType =
+      mode === "source" || mode === "metadata" ? mode : state.lastScanType;
 
-      setResults(results);
-
-      // Update cumulative all-time stats
-      updateStats({
-        lastScanDate: new Date().toISOString(),
-        totalScanned: stats.totalScanned + totalScanned,
-        totalFlagged: stats.totalFlagged + results.length,
-      });
-
-      const nextRoute =
-        results.length > 0 ? "/(tabs)/results" : "/(tabs)/empty";
-      router.replace(nextRoute);
-    } catch {
-      setScanStatus("idle");
-      setConfigStep("idle");
-      Alert.alert(
-        "Scan Error",
-        "Something went wrong while scanning your gallery.",
-      );
-    }
-  }, [
-    permissionStatus,
-    requestPermission,
-    router,
-    selectedRange,
-    selectedType,
-    setResults,
-    setScanProgress,
-    setScanStatus,
-    setScanType,
-    stats.totalFlagged,
-    stats.totalScanned,
-    updateStats,
-  ]);
+    setSelectedType(nextType);
+    setConfigStep("range");
+  }, [mode, openConfig, state.lastScanType]);
 
   const lastScan = stats.lastScanDate
     ? formatRelativeDate(stats.lastScanDate)
@@ -392,9 +413,7 @@ export default function ScanHomeScreen(): React.JSX.Element {
 
               <Text style={styles.stepLabel}>Step 2 of 2</Text>
               <Text style={styles.stepTitle}>Pick detection mode</Text>
-              <Text style={styles.stepDesc}>
-                Choose what to look for.
-              </Text>
+              <Text style={styles.stepDesc}>Choose what to look for.</Text>
 
               <View style={styles.typeList}>
                 {SCAN_TYPE_OPTIONS.map((opt) => {
