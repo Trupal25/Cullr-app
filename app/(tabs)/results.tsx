@@ -2,10 +2,11 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { FlashList } from "@shopify/flash-list";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  BackHandler,
   Dimensions,
   FlatList,
   Modal,
@@ -138,6 +139,29 @@ export default function ResultsScreen(): React.JSX.Element {
   const closeViewer = useCallback(() => {
     setViewerIndex(-1);
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = (): boolean => {
+        if (viewerIndex >= 0) {
+          setViewerIndex(-1);
+          return true;
+        }
+
+        router.replace("/(tabs)");
+        return true;
+      };
+
+      const subscription = BackHandler.addEventListener(
+        "hardwareBackPress",
+        onBackPress,
+      );
+
+      return () => {
+        subscription.remove();
+      };
+    }, [router, viewerIndex]),
+  );
 
   const onViewerScrollEnd = useCallback(
     (e: { nativeEvent: { contentOffset: { x: number } } }) => {
@@ -278,18 +302,14 @@ export default function ResultsScreen(): React.JSX.Element {
             selectedCount === 0 && styles.deleteButtonDisabled,
           ]}
         >
-          <Text style={styles.deleteButtonText}>
-            Delete {selectedCount}
-          </Text>
+          <Text style={styles.deleteButtonText}>Delete {selectedCount}</Text>
         </Pressable>
       </View>
 
       {selectedCount > 0 && (
         <View style={styles.selectionPill}>
           <View style={styles.pulseDot} />
-          <Text style={styles.selectionPillText}>
-            {selectedCount} selected
-          </Text>
+          <Text style={styles.selectionPillText}>{selectedCount} selected</Text>
         </View>
       )}
 
@@ -423,7 +443,6 @@ export default function ResultsScreen(): React.JSX.Element {
           </View>
         )}
       </Modal>
-
     </SafeAreaView>
   );
 }

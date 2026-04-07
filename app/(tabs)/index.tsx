@@ -1,9 +1,11 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   Alert,
+  BackHandler,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -220,6 +222,41 @@ export default function ScanHomeScreen(): React.JSX.Element {
     setConfigStep("range");
   }, [mode, openConfig, state.lastScanType]);
 
+  useFocusEffect(
+    useCallback(() => {
+      if (state.scanStatus !== "scanning" && !openConfig) {
+        setConfigStep("idle");
+      }
+    }, [openConfig, state.scanStatus]),
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = (): boolean => {
+        if (configStep === "type" || configStep === "range") {
+          handleBack();
+          return true;
+        }
+
+        // Keep scanning flow in-app and avoid accidental app exit.
+        if (configStep === "scanning") {
+          return true;
+        }
+
+        return false;
+      };
+
+      const subscription = BackHandler.addEventListener(
+        "hardwareBackPress",
+        onBackPress,
+      );
+
+      return () => {
+        subscription.remove();
+      };
+    }, [configStep, handleBack]),
+  );
+
   const lastScan = stats.lastScanDate
     ? formatRelativeDate(stats.lastScanDate)
     : null;
@@ -240,11 +277,11 @@ export default function ScanHomeScreen(): React.JSX.Element {
       <View style={styles.content}>
         {/* Idle state */}
         {configStep === "idle" && (
-          <Animated.View
-            entering={FadeIn.duration(300)}
-            style={styles.centerContainer}
-          >
-            <View style={styles.idleMainBlock}>
+          <View style={styles.centerContainer}>
+            <Animated.View
+              entering={FadeIn.duration(260)}
+              style={styles.idleMainBlock}
+            >
               <View style={styles.labelSection}>
                 <Text style={styles.intelligenceLabel}>
                   Gallery Intelligence
@@ -272,7 +309,7 @@ export default function ScanHomeScreen(): React.JSX.Element {
                   <Text style={styles.scanTitle}>Scan Gallery</Text>
                 </View>
               </View>
-            </View>
+            </Animated.View>
 
             <Pressable
               style={({ pressed }) => [
@@ -295,7 +332,7 @@ export default function ScanHomeScreen(): React.JSX.Element {
                   : "No scans yet"}
               </Text>
             </Pressable>
-          </Animated.View>
+          </View>
         )}
 
         {/* Step 1: Choose range */}
@@ -648,11 +685,18 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 108,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 2,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.08,
+        shadowRadius: 16,
+      },
+      android: {
+        elevation: 0,
+      },
+      default: {},
+    }),
   },
   activityText: {
     flex: 1,
