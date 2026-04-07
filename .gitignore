@@ -36,9 +36,16 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
-app-example
+/app-example/
 
 # generated native folders
 /ios
 /android
 /test
+/.agent/
+/.agent/
+/.agents/
+/.antigravity/
+/.stitch_screens/
+
+
