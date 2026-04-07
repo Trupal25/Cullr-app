@@ -20,7 +20,6 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { BottomNav } from "../../src/components/bottom-nav";
 import { Header } from "../../src/components/header";
 import { useMediaPermission } from "../../src/hooks/use-permissions";
 import { runScan } from "../../src/services/scan-orchestrator";
@@ -174,7 +173,8 @@ export default function ScanHomeScreen(): React.JSX.Element {
         totalFlagged: stats.totalFlagged + results.length,
       });
 
-      const nextRoute = results.length > 0 ? "/(tabs)/results" : "/(tabs)/empty";
+      const nextRoute =
+        results.length > 0 ? "/(tabs)/results" : "/(tabs)/empty";
       router.replace(nextRoute);
     } catch {
       setScanStatus("idle");
@@ -494,7 +494,6 @@ export default function ScanHomeScreen(): React.JSX.Element {
           </Animated.View>
         )}
       </View>
-      <BottomNav activeTab="home" />
     </SafeAreaView>
   );
 }

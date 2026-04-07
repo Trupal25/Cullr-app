@@ -2,16 +2,15 @@ import { MaterialIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import React, { useState } from "react";
 import {
-    Alert,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Switch,
-    Text,
-    View,
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { BottomNav } from "../../src/components/bottom-nav";
 import { Header } from "../../src/components/header";
 import { useScanStore } from "../../src/store/scan-store";
 import { Colors } from "../../src/theme";
@@ -151,8 +150,6 @@ export default function SettingsScreen(): React.JSX.Element {
 
         <Text style={styles.versionText}>Cullr v1.0.0</Text>
       </ScrollView>
-
-      <BottomNav activeTab="settings" />
     </SafeAreaView>
   );
 }

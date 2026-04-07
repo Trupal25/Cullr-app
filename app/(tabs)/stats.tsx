@@ -2,7 +2,6 @@ import { MaterialIcons } from "@expo/vector-icons";
 import React from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { BottomNav } from "../../src/components/bottom-nav";
 import { Header } from "../../src/components/header";
 // UndoSnackbar is rendered once in the tab layout
 import { formatMB } from "../../src/services/scan-orchestrator";
@@ -77,9 +76,6 @@ export default function StatsScreen(): React.JSX.Element {
           </View>
         </View>
       </ScrollView>
-
-      {/* UndoSnackbar is rendered in the tab layout to avoid duplicate timers */}
-      <BottomNav activeTab="stats" />
     </SafeAreaView>
   );
 }

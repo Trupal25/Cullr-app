@@ -3,7 +3,7 @@ import {
   Inter_400Regular,
   Inter_500Medium,
   Inter_600SemiBold,
-} from '@expo-google-fonts/inter';
+} from "@expo-google-fonts/inter";
 import {
   SpaceGrotesk_300Light,
   SpaceGrotesk_400Regular,
@@ -11,13 +11,14 @@ import {
   SpaceGrotesk_600SemiBold,
   SpaceGrotesk_700Bold,
   useFonts,
-} from '@expo-google-fonts/space-grotesk';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { StatusBar } from 'expo-status-bar';
-import React, { useEffect } from 'react';
-import { ScanProvider, useScanStore } from '../src/store/scan-store';
-import { Colors } from '../src/theme';
+} from "@expo-google-fonts/space-grotesk";
+import { Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import { StatusBar } from "expo-status-bar";
+import React, { useEffect } from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { ScanProvider, useScanStore } from "../src/store/scan-store";
+import { Colors } from "../src/theme";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -31,7 +32,7 @@ function RootNavigator(): React.JSX.Element | null {
       screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: Colors.surface },
-        animation: 'fade',
+        animation: "fade",
       }}
     >
       {/* All screens must be declared unconditionally so expo-router
@@ -42,9 +43,9 @@ function RootNavigator(): React.JSX.Element | null {
       <Stack.Screen
         name="delete-confirm"
         options={{
-          presentation: 'transparentModal',
-          animation: 'slide_from_bottom',
-          contentStyle: { backgroundColor: 'transparent' },
+          presentation: "transparentModal",
+          animation: "slide_from_bottom",
+          contentStyle: { backgroundColor: "transparent" },
         }}
       />
     </Stack>
@@ -73,9 +74,11 @@ export default function RootLayout(): React.JSX.Element | null {
   if (!fontsLoaded) return null;
 
   return (
-    <ScanProvider>
-      <StatusBar style="dark" />
-      <RootNavigator />
-    </ScanProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ScanProvider>
+        <StatusBar style="dark" />
+        <RootNavigator />
+      </ScanProvider>
+    </GestureHandlerRootView>
   );
 }

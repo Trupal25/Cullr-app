@@ -4,7 +4,6 @@ import { useRouter } from "expo-router";
 import React, { useCallback } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { BottomNav } from "../../src/components/bottom-nav";
 import { Header } from "../../src/components/header";
 import { StatusBarPill } from "../../src/components/status-bar-pill";
 import { useMediaPermission } from "../../src/hooks/use-permissions";
@@ -112,8 +111,6 @@ export default function EmptyStateScreen(): React.JSX.Element {
       <View style={styles.statusPillContainer}>
         <StatusBarPill />
       </View>
-
-      <BottomNav activeTab="home" />
     </SafeAreaView>
   );
 }
