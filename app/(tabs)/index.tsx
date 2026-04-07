@@ -63,14 +63,14 @@ type ScanTypeOption = {
 const SCAN_TYPE_OPTIONS: ScanTypeOption[] = [
   {
     value: "metadata",
-    label: "Smart Spam Scan",
-    desc: "Analyzes resolution, file size & messaging patterns to find forwarded junk",
+    label: "Smart Scan",
+    desc: "Flags likely junk and duplicates",
     icon: "auto-awesome",
   },
   {
     value: "source",
-    label: "App Bulk Review",
-    desc: "Shows ALL images from WhatsApp, Telegram & Instagram for quick triage",
+    label: "App Review",
+    desc: "images from socials for quick triage",
     icon: "apps",
   },
 ];
@@ -143,7 +143,7 @@ export default function ScanHomeScreen(): React.JSX.Element {
       if (!granted) {
         Alert.alert(
           "Permission Required",
-          "Cullr needs access to your photo library to scan for spam images.",
+          "Allow photo access to scan your library.",
         );
         return;
       }
@@ -270,7 +270,7 @@ export default function ScanHomeScreen(): React.JSX.Element {
               />
               <Text style={styles.activityText}>
                 {lastScan
-                  ? `Last scan: ${lastScan}${deletedCount > 0 ? ` • ${deletedCount} images deleted` : ""}`
+                  ? `Scanned ${lastScan}${deletedCount > 0 ? ` • ${deletedCount} deleted` : ""}`
                   : "No scans yet"}
               </Text>
             </Pressable>
@@ -306,7 +306,7 @@ export default function ScanHomeScreen(): React.JSX.Element {
               <Text style={styles.stepLabel}>Step 1 of 2</Text>
               <Text style={styles.stepTitle}>Choose scan depth</Text>
               <Text style={styles.stepDesc}>
-                Select how many photos you want to review right now.
+                Pick how much of your library to scan.
               </Text>
 
               <View style={styles.optionsGrid}>
@@ -393,7 +393,7 @@ export default function ScanHomeScreen(): React.JSX.Element {
               <Text style={styles.stepLabel}>Step 2 of 2</Text>
               <Text style={styles.stepTitle}>Pick detection mode</Text>
               <Text style={styles.stepDesc}>
-                Choose how Cullr decides which images should be flagged.
+                Choose what to look for.
               </Text>
 
               <View style={styles.typeList}>

@@ -19,9 +19,7 @@ export default function StatsScreen(): React.JSX.Element {
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.pageHeader}>
           <Text style={styles.title}>Your Impact</Text>
-          <Text style={styles.subtitle}>
-            All-time space saved and scans run
-          </Text>
+          <Text style={styles.subtitle}>Space saved and scans run</Text>
         </View>
 
         <View style={styles.grid}>

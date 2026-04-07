@@ -8,8 +8,8 @@ type StatusBarPillProps = {
 };
 
 export function StatusBarPill({
-  status = 'System Idle',
-  version = 'v2.0.4-stable',
+  status = 'Idle',
+  version = 'v2.0.4',
 }: StatusBarPillProps): React.JSX.Element {
   return (
     <View style={styles.container}>

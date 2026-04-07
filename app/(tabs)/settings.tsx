@@ -21,8 +21,8 @@ export default function SettingsScreen(): React.JSX.Element {
 
   const handleResetStats = () => {
     Alert.alert(
-      "Reset Stats?",
-      "This will clear your all-time storage saved and scans run. This cannot be undone.",
+      "Reset stats?",
+      "This clears your scan history and saved space totals.",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -89,7 +89,7 @@ export default function SettingsScreen(): React.JSX.Element {
               />
               <View>
                 <Text style={styles.settingLabel}>ML Model Detection</Text>
-                <Text style={styles.settingDesc}>Coming soon to Cullr Pro</Text>
+                <Text style={styles.settingDesc}>Coming soon</Text>
               </View>
             </View>
             <View style={styles.proBadge}>
@@ -109,10 +109,8 @@ export default function SettingsScreen(): React.JSX.Element {
                 color={Colors.textPrimary}
               />
               <View>
-                <Text style={styles.settingLabel}>On-Device Scanning</Text>
-                <Text style={styles.settingDesc}>
-                  Photos never leave your device
-                </Text>
+                <Text style={styles.settingLabel}>On-Device Scan</Text>
+                <Text style={styles.settingDesc}>Nothing leaves your phone</Text>
               </View>
             </View>
             <MaterialIcons
@@ -138,11 +136,9 @@ export default function SettingsScreen(): React.JSX.Element {
               />
               <View>
                 <Text style={[styles.settingLabel, { color: Colors.danger }]}>
-                  Reset All-Time Stats
+                  Reset Stats
                 </Text>
-                <Text style={styles.settingDesc}>
-                  Clear your impact history
-                </Text>
+                <Text style={styles.settingDesc}>Clear scan totals</Text>
               </View>
             </View>
           </Pressable>

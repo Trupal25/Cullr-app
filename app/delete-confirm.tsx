@@ -171,8 +171,7 @@ export default function DeleteConfirmScreen(): React.JSX.Element {
                 </Text>
 
                 <Text style={styles.bodyText}>
-                  Images will be moved to your system Trash. You have 6 seconds
-                  to undo before they are removed.
+                  Moves them to Trash. Undo stays available for 6 seconds.
                 </Text>
 
                 <View style={styles.statRow}>
@@ -197,8 +196,7 @@ export default function DeleteConfirmScreen(): React.JSX.Element {
                     ]}
                   >
                     <Text style={styles.deleteButtonText}>
-                      Delete {selectedCount} image
-                      {selectedCount !== 1 ? "s" : ""}
+                      Delete {selectedCount}
                     </Text>
                   </Pressable>
                   <Pressable
@@ -216,10 +214,8 @@ export default function DeleteConfirmScreen(): React.JSX.Element {
             </View>
 
             <View style={styles.statusBar}>
-              <Text style={styles.statusText}>
-                System: Awaiting_Confirmation
-              </Text>
-              <Text style={styles.statusText}>Auth: Validated</Text>
+              <Text style={styles.statusText}>Trash</Text>
+              <Text style={styles.statusText}>Undo: 6s</Text>
             </View>
           </Animated.View>
         </GestureDetector>

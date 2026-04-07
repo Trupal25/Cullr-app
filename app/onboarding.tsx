@@ -26,7 +26,7 @@ export default function OnboardingScreen(): React.JSX.Element {
     if (!granted) {
       Alert.alert(
         'Permission Required',
-        'Cullr needs access to your photo library to scan for spam images. Please grant permission in Settings.',
+        'Cullr needs photo access to scan your library.',
         [{ text: 'OK' }]
       );
       return;
@@ -54,25 +54,25 @@ export default function OnboardingScreen(): React.JSX.Element {
           <View style={styles.heroText}>
             <Text style={styles.headline}>Meet Cullr.</Text>
             <Text style={styles.subtitle}>
-              It finds the junk. You decide what stays.
+              Find junk fast. Keep what matters.
             </Text>
           </View>
 
           <View style={styles.features}>
             <FeatureRow
               icon="auto-awesome-motion"
-              title="Smart Batching"
-              description="Duplicates and near-misses grouped by AI analysis."
+              title="Smart Groups"
+              description="High, medium, and low spam risk."
             />
             <FeatureRow
               icon="visibility-off"
-              title="Deep Privacy"
-              description="Metadata and visual features indexed locally."
+              title="Private"
+              description="Runs on your device."
             />
             <FeatureRow
               icon="speed"
-              title="Instant Cull"
-              description="Clear thousands of unnecessary captures in seconds."
+              title="Fast Cleanup"
+              description="Review and clear clutter quickly."
             />
           </View>
         </View>
@@ -88,7 +88,7 @@ export default function OnboardingScreen(): React.JSX.Element {
             ]}
           >
             <Text style={styles.ctaText}>
-              {loading ? 'Requesting Access...' : 'Initialize Library Scan'}
+              {loading ? 'Allowing Access...' : 'Allow Photos'}
             </Text>
           </Pressable>
 
@@ -96,12 +96,7 @@ export default function OnboardingScreen(): React.JSX.Element {
             <View style={styles.trustRow}>
               <MaterialIcons name="shield" size={14} color={Colors.textDark} />
               <Text style={styles.trustText}>
-                Only reads your library. Never uploads.
-              </Text>
-            </View>
-            <View style={styles.statusBadge}>
-              <Text style={styles.statusText}>
-                System Status: Ready • v1.0.4-stable
+                On-device only. Nothing uploaded.
               </Text>
             </View>
           </View>
@@ -269,19 +264,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: Colors.textDark,
     letterSpacing: 1,
-    textTransform: 'uppercase',
-  },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    backgroundColor: Colors.surfaceContainerHigh,
-    borderRadius: 9999,
-  },
-  statusText: {
-    fontFamily: 'SpaceGrotesk_400Regular',
-    fontSize: 10,
-    color: Colors.outlineVariant,
-    letterSpacing: 1.5,
     textTransform: 'uppercase',
   },
 });

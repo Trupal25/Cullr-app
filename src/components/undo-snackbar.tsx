@@ -174,10 +174,10 @@ export function UndoSnackbar(): React.JSX.Element | null {
         {/* Centre: message block */}
         <View style={styles.textBlock}>
           <Text style={styles.label} numberOfLines={1}>
-            {count} image{count !== 1 ? "s" : ""} removed
+            Removed {count} image{count !== 1 ? "s" : ""}
           </Text>
           <Text style={styles.meta}>
-            {formatMB(totalBytes)} · tap Undo to restore
+            {formatMB(totalBytes)} saved
           </Text>
         </View>
 

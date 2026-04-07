@@ -226,7 +226,7 @@ export default function ResultsScreen(): React.JSX.Element {
           {isSourceMode ? " from bulk sources" : ""}
         </Text>
         <Text style={styles.summarySubtitle}>
-          {formatMB(totalBytes)} · tap to preview · long-press to select
+          {formatMB(totalBytes)} · Tap to preview · Hold to select
         </Text>
       </View>
 
@@ -279,7 +279,7 @@ export default function ResultsScreen(): React.JSX.Element {
           ]}
         >
           <Text style={styles.deleteButtonText}>
-            Delete {selectedCount} Image{selectedCount !== 1 ? "s" : ""}
+            Delete {selectedCount}
           </Text>
         </Pressable>
       </View>
@@ -288,7 +288,7 @@ export default function ResultsScreen(): React.JSX.Element {
         <View style={styles.selectionPill}>
           <View style={styles.pulseDot} />
           <Text style={styles.selectionPillText}>
-            {selectedCount} item{selectedCount !== 1 ? "s" : ""} selected
+            {selectedCount} selected
           </Text>
         </View>
       )}
@@ -344,7 +344,7 @@ export default function ResultsScreen(): React.JSX.Element {
                   size={16}
                   color="rgba(255,255,255,0.4)"
                 />
-                <Text style={styles.swipeHintText}>Swipe to browse</Text>
+                <Text style={styles.swipeHintText}>Swipe</Text>
               </View>
             )}
 
@@ -379,7 +379,7 @@ export default function ResultsScreen(): React.JSX.Element {
                       color="#FFF"
                     />
                     <Text style={styles.viewerActionText}>
-                      {isSharing ? "Sharing..." : "Share"}
+                      {isSharing ? "Sharing" : "Share"}
                     </Text>
                   </Pressable>
 

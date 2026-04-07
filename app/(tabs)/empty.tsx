@@ -86,8 +86,8 @@ export default function EmptyStateScreen(): React.JSX.Element {
             <Text style={styles.headline}>Nothing to cull.</Text>
             <Text style={styles.subtitle}>
               {lastScanType === "source"
-                ? "No messaging app images found in this range."
-                : "Your gallery looks clean. No spam or junk detected."}
+                ? "No app images found in this range."
+                : "No junk found in this scan."}
             </Text>
           </View>
 
