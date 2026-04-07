@@ -9,7 +9,7 @@ export const Colors = {
   surfaceContainerHighest: '#BFCACA',
   surfaceBright: '#FAFCFC',
 
-  primary: '#0D766E', // Deeper Luxe Teal
+  primary: '#k', // Deeper Luxe Teal
   primaryContainer: '#0D9488', // Use this for backgrounds of some sections
   primaryFixedDim: '#2DD4BF',
   onPrimary: '#FFFFFF',
