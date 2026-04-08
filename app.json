@@ -6,6 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "cullr",
+    "jsEngine": "hermes",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "ios": {
