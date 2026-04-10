@@ -14,13 +14,16 @@ export function inferSource(filename: string): SourceGuess {
   const name = filename.toLowerCase();
 
   // WhatsApp — several naming conventions across Android/iOS versions
-  if (name.startsWith('img-') && name.includes('-wa')) {
+  if (/^img-\d{8}-wa\d+/.test(name)) {
     return 'WhatsApp';
   }
-  if (name.startsWith('img_') && name.includes('_wa')) {
+  if (/^img_\d{8}_wa\d+/.test(name)) {
     return 'WhatsApp';
   }
-  if (name.startsWith('wa')) {
+  if (/^wa\d{4,}/.test(name)) {
+    return 'WhatsApp';
+  }
+  if (name.startsWith('whatsapp image')) {
     return 'WhatsApp';
   }
 
