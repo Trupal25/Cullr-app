@@ -72,7 +72,7 @@ const SCAN_TYPE_OPTIONS: ScanTypeOption[] = [
   {
     value: "source",
     label: "App Review",
-    desc: "images from socials for quick triage",
+    desc: "Shows all social-app images (not spam score)",
     icon: "apps",
   },
 ];

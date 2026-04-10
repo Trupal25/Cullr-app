@@ -9,7 +9,7 @@ type StatusBarPillProps = {
 
 export function StatusBarPill({
   status = 'Idle',
-  version = 'v2.0.4',
+  version = 'v0.1.0',
 }: StatusBarPillProps): React.JSX.Element {
   return (
     <View style={styles.container}>

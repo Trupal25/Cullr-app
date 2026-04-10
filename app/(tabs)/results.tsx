@@ -2,16 +2,17 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { FlashList } from "@shopify/flash-list";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
+import * as MediaLibrary from "expo-media-library";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   BackHandler,
   Dimensions,
   FlatList,
   Modal,
   Pressable,
-  Share,
   StyleSheet,
   Text,
   View,
@@ -118,12 +119,47 @@ export default function ResultsScreen(): React.JSX.Element {
       if (isSharing) return;
       setIsSharing(true);
       try {
-        await Share.share(
-          { url: item.asset.uri, title: "Share image from Cullr" },
-          { dialogTitle: "Share this image" },
+        const assetInfo = await MediaLibrary.getAssetInfoAsync(item.asset.id, {
+          shouldDownloadFromNetwork: false,
+        });
+
+        const shareUri = assetInfo.localUri ?? assetInfo.uri ?? item.asset.uri;
+        if (!shareUri) throw new Error("No shareable URI found for this image");
+
+        // expo-sharing requires a native module (ExpoSharing / FileProvider)
+        // that is NOT bundled in Android Expo Go. Dynamic import prevents the
+        // module-load crash that would hide the results route.
+        const Sharing = await import("expo-sharing").catch(() => null);
+        const canShare =
+          typeof Sharing?.isAvailableAsync === "function" &&
+          (await Sharing.isAvailableAsync());
+
+        if (!canShare) {
+          Alert.alert(
+            "Can't share right now",
+            "Sharing isn't available on this device.",
+          );
+          return;
+        }
+
+        await Sharing.shareAsync(shareUri, {
+          dialogTitle: "Share this image",
+          mimeType: "image/*",
+          UTI: "public.image",
+        });
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Unknown share error";
+        console.error("[results/share] failed", {
+          assetId: item.asset.id,
+          filename: item.asset.filename,
+          uri: item.asset.uri,
+          message,
+        });
+        Alert.alert(
+          "Share failed",
+          "Could not share this image. Please try again.",
         );
-      } catch {
-        // User cancelled — that's fine
       } finally {
         setIsSharing(false);
       }
@@ -389,17 +425,18 @@ export default function ResultsScreen(): React.JSX.Element {
                     onPress={() => handleShare(viewerItem)}
                     style={({ pressed }) => [
                       styles.viewerActionBtn,
-                      pressed && styles.viewerActionBtnPressed,
+                      isSharing && styles.viewerActionBtnDisabled,
+                      pressed && !isSharing && styles.viewerActionBtnPressed,
                     ]}
                     disabled={isSharing}
                   >
-                    <MaterialIcons
-                      name={isSharing ? "hourglass-top" : "share"}
-                      size={20}
-                      color="#FFF"
-                    />
+                    {isSharing ? (
+                      <ActivityIndicator size={18} color="rgba(255,255,255,0.7)" />
+                    ) : (
+                      <MaterialIcons name="share" size={20} color="#FFF" />
+                    )}
                     <Text style={styles.viewerActionText}>
-                      {isSharing ? "Sharing" : "Share"}
+                      {isSharing ? "Sharing…" : "Share"}
                     </Text>
                   </Pressable>
 
@@ -755,6 +792,9 @@ const styles = StyleSheet.create({
   },
   viewerActionBtnPressed: {
     backgroundColor: "rgba(255,255,255,0.12)",
+  },
+  viewerActionBtnDisabled: {
+    opacity: 0.5,
   },
   viewerActionText: {
     fontFamily: "SpaceGrotesk_600SemiBold",

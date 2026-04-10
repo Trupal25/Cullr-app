@@ -1,6 +1,12 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import React from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Header } from "../../src/components/header";
 // UndoSnackbar is rendered once in the tab layout
@@ -11,6 +17,9 @@ import { Colors } from "../../src/theme";
 export default function StatsScreen(): React.JSX.Element {
   const { state } = useScanStore();
   const { stats } = state;
+  const { width, fontScale } = useWindowDimensions();
+  const useSingleColumnCards = width < 340 || fontScale > 1.2;
+  const useStackedWideRow = width < 390 || fontScale > 1.1;
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["left", "right"]}>
@@ -37,7 +46,12 @@ export default function StatsScreen(): React.JSX.Element {
           </View>
 
           {/* Deleted Count */}
-          <View style={styles.card}>
+          <View
+            style={[
+              styles.card,
+              useSingleColumnCards ? styles.cardFull : styles.cardHalf,
+            ]}
+          >
             <View style={styles.cardIcon}>
               <MaterialIcons
                 name="delete-outline"
@@ -50,7 +64,12 @@ export default function StatsScreen(): React.JSX.Element {
           </View>
 
           {/* Total Flagged */}
-          <View style={styles.card}>
+          <View
+            style={[
+              styles.card,
+              useSingleColumnCards ? styles.cardFull : styles.cardHalf,
+            ]}
+          >
             <View style={styles.cardIcon}>
               <MaterialIcons
                 name="flag"
@@ -67,9 +86,27 @@ export default function StatsScreen(): React.JSX.Element {
             <View style={styles.cardIcon}>
               <MaterialIcons name="radar" size={20} color={Colors.textMuted} />
             </View>
-            <View style={styles.cardWideText}>
-              <Text style={styles.cardLabel}>Total Images Scanned</Text>
-              <Text style={styles.cardValueSmall}>{stats.totalScanned}</Text>
+            <View
+              style={[
+                styles.cardWideText,
+                useStackedWideRow && styles.cardWideTextStacked,
+              ]}
+            >
+              <Text style={[styles.cardLabel, styles.cardWideLabel]}>
+                Total Images Scanned
+              </Text>
+              <Text
+                style={[
+                  styles.cardValueSmall,
+                  styles.cardWideValue,
+                  useStackedWideRow && styles.cardWideValueStacked,
+                ]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.85}
+              >
+                {stats.totalScanned}
+              </Text>
             </View>
           </View>
         </View>
@@ -113,8 +150,13 @@ const styles = StyleSheet.create({
     padding: 20,
     borderWidth: 1,
     borderColor: Colors.border,
-    width: "47.5%",
     gap: 12,
+  },
+  cardHalf: {
+    width: "47%",
+  },
+  cardFull: {
+    width: "100%",
   },
   cardLarge: {
     width: "100%",
@@ -132,9 +174,14 @@ const styles = StyleSheet.create({
   cardWideText: {
     flex: 1,
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
     marginLeft: 12,
+    gap: 12,
+  },
+  cardWideTextStacked: {
+    flexDirection: "column",
+    alignItems: "flex-start",
+    gap: 6,
   },
   cardIcon: {
     width: 40,
@@ -164,5 +211,16 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     textTransform: "uppercase",
     letterSpacing: 1,
+  },
+  cardWideLabel: {
+    flex: 1,
+    flexShrink: 1,
+  },
+  cardWideValue: {
+    flexShrink: 0,
+    textAlign: "right",
+  },
+  cardWideValueStacked: {
+    textAlign: "left",
   },
 });
