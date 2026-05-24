@@ -25,7 +25,7 @@ type ScanAction =
   | { type: 'SET_SCAN_PROGRESS'; progress: number; label: string }
   | { type: 'SET_RESULTS'; results: ScoredResult[] }
   | { type: 'TOGGLE_SELECT'; id: string }
-  | { type: 'SELECT_ALL' }
+  | { type: 'SELECT_ALL'; ids: string[] }
   | { type: 'DESELECT_ALL' }
   | { type: 'REMOVE_DELETED'; deletedIds: string[] }
   | { type: 'STAGE_DELETION'; items: ScoredResult[] }
@@ -83,8 +83,7 @@ function reducer(state: ScanState, action: ScanAction): ScanState {
       return { ...state, selectedIds: next };
     }
     case 'SELECT_ALL': {
-      const all = new Set(state.scanResults.map((r) => r.asset.id));
-      return { ...state, selectedIds: all };
+      return { ...state, selectedIds: new Set(action.ids) };
     }
     case 'DESELECT_ALL':
       return { ...state, selectedIds: new Set() };
@@ -150,7 +149,7 @@ type ScanContextType = {
   setResults: (results: ScoredResult[]) => void;
   setScanType: (scanType: ScanType) => void;
   toggleSelect: (id: string) => void;
-  selectAll: () => void;
+  selectAll: (ids: string[]) => void;
   deselectAll: () => void;
   removeDeleted: (ids: string[]) => void;
   stageDeletion: (items: ScoredResult[]) => void;
@@ -217,8 +216,8 @@ export function ScanProvider({ children }: { children: React.ReactNode }): React
     dispatch({ type: 'TOGGLE_SELECT', id });
   }, []);
 
-  const selectAll = useCallback(() => {
-    dispatch({ type: 'SELECT_ALL' });
+  const selectAll = useCallback((ids: string[]) => {
+    dispatch({ type: 'SELECT_ALL', ids });
   }, []);
 
   const deselectAll = useCallback(() => {

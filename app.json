@@ -56,7 +56,8 @@
           "savePhotosPermission": "$(PRODUCT_NAME) needs permission to save photos.",
           "isAccessMediaLocationEnabled": true
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,

@@ -3,6 +3,7 @@ import { FlashList } from "@shopify/flash-list";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import * as MediaLibrary from "expo-media-library";
+import { NativeModulesProxy } from "expo-modules-core";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
@@ -12,7 +13,9 @@ import {
   Dimensions,
   FlatList,
   Modal,
+  Platform,
   Pressable,
+  Share,
   StyleSheet,
   Text,
   View,
@@ -90,6 +93,9 @@ export default function ResultsScreen(): React.JSX.Element {
 
   const totalItems = state.scanResults.length;
   const selectedCount = state.selectedIds.size;
+  const areAllFilteredItemsSelected =
+    filteredItems.length > 0 &&
+    filteredItems.every((item) => state.selectedIds.has(item.asset.id));
   const totalBytes = useMemo(
     () => computeTotalBytes(state.scanResults),
     [state.scanResults],
@@ -105,8 +111,8 @@ export default function ResultsScreen(): React.JSX.Element {
 
   const handleSelectAll = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    selectAll();
-  }, [selectAll]);
+    selectAll(filteredItems.map((item) => item.asset.id));
+  }, [filteredItems, selectAll]);
 
   const handleDelete = useCallback(() => {
     if (selectedCount === 0) return;
@@ -124,29 +130,90 @@ export default function ResultsScreen(): React.JSX.Element {
         });
 
         const shareUri = assetInfo.localUri ?? assetInfo.uri ?? item.asset.uri;
-        if (!shareUri) throw new Error("No shareable URI found for this image");
-
-        // expo-sharing requires a native module (ExpoSharing / FileProvider)
-        // that is NOT bundled in Android Expo Go. Dynamic import prevents the
-        // module-load crash that would hide the results route.
-        const Sharing = await import("expo-sharing").catch(() => null);
-        const canShare =
-          typeof Sharing?.isAvailableAsync === "function" &&
-          (await Sharing.isAvailableAsync());
-
-        if (!canShare) {
-          Alert.alert(
-            "Can't share right now",
-            "Sharing isn't available on this device.",
-          );
-          return;
+        if (!shareUri) {
+          throw new Error("No shareable URI available for this image");
         }
 
-        await Sharing.shareAsync(shareUri, {
-          dialogTitle: "Share this image",
-          mimeType: "image/*",
-          UTI: "public.image",
-        });
+        if (Platform.OS === "android") {
+          const expoSharingModule =
+            (NativeModulesProxy as Record<string, unknown>).ExpoSharing ?? null;
+
+          if (!expoSharingModule) {
+            Alert.alert(
+              "Sharing unavailable in this build",
+              "Android image sharing needs a rebuilt dev client. Run bun run android, then open the new build.",
+            );
+            return;
+          }
+
+          try {
+            const Sharing = await import("expo-sharing");
+            const sharingAvailable = await Sharing.isAvailableAsync();
+
+            if (!sharingAvailable) {
+              throw new Error("expo-sharing unavailable on this device");
+            }
+
+            await Sharing.shareAsync(shareUri, {
+              dialogTitle: "Share this image",
+              mimeType: "image/*",
+              UTI: "public.image",
+            });
+            return;
+          } catch (androidSharingError) {
+            const nativeMessage =
+              androidSharingError instanceof Error
+                ? androidSharingError.message
+                : "Unknown android sharing error";
+
+            console.warn("[results/share] android native share unavailable", {
+              assetId: item.asset.id,
+              nativeMessage,
+            });
+
+            Alert.alert(
+              "Share unavailable",
+              "Could not open Android image share sheet in this build.",
+            );
+            return;
+          }
+        }
+
+        // iOS/web fallback path.
+        const baseSharePayload = {
+          title: "Share image from Cullr",
+          url: shareUri,
+        };
+
+        try {
+          // Attachment-first path: many Android targets treat a payload with
+          // both text + URL as plain text and drop the image stream.
+          await Share.share(baseSharePayload, {
+            dialogTitle: "Share this image",
+          });
+        } catch (fallbackShareError) {
+          const fallbackMessage =
+            fallbackShareError instanceof Error
+              ? fallbackShareError.message
+              : "Unknown share fallback error";
+          const requiresText = /empty\s*message|can't\s*send\s*empty/i.test(
+            fallbackMessage,
+          );
+
+          if (!requiresText) {
+            throw fallbackShareError;
+          }
+
+          // Some targets reject empty-text payloads; provide a small caption
+          // only for that case.
+          await Share.share(
+            {
+              ...baseSharePayload,
+              message: "Shared from Cullr",
+            },
+            { dialogTitle: "Share this image" },
+          );
+        }
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Unknown share error";
@@ -158,7 +225,7 @@ export default function ResultsScreen(): React.JSX.Element {
         });
         Alert.alert(
           "Share failed",
-          "Could not share this image. Please try again.",
+          "Could not share this image right now. Please try a different photo.",
         );
       } finally {
         setIsSharing(false);
@@ -323,11 +390,11 @@ export default function ResultsScreen(): React.JSX.Element {
 
       <View style={styles.actionBar}>
         <Pressable
-          onPress={selectedCount === totalItems ? deselectAll : handleSelectAll}
+          onPress={areAllFilteredItemsSelected ? deselectAll : handleSelectAll}
           style={styles.deselectButton}
         >
           <Text style={styles.deselectText}>
-            {selectedCount === totalItems ? "Deselect All" : "Select All"}
+            {areAllFilteredItemsSelected ? "Deselect All" : "Select All"}
           </Text>
         </Pressable>
         <Pressable
@@ -425,18 +492,17 @@ export default function ResultsScreen(): React.JSX.Element {
                     onPress={() => handleShare(viewerItem)}
                     style={({ pressed }) => [
                       styles.viewerActionBtn,
-                      isSharing && styles.viewerActionBtnDisabled,
-                      pressed && !isSharing && styles.viewerActionBtnPressed,
+                      pressed && styles.viewerActionBtnPressed,
                     ]}
                     disabled={isSharing}
                   >
-                    {isSharing ? (
-                      <ActivityIndicator size={18} color="rgba(255,255,255,0.7)" />
-                    ) : (
-                      <MaterialIcons name="share" size={20} color="#FFF" />
-                    )}
+                    <MaterialIcons
+                      name={isSharing ? "hourglass-top" : "share"}
+                      size={20}
+                      color="#FFF"
+                    />
                     <Text style={styles.viewerActionText}>
-                      {isSharing ? "Sharing…" : "Share"}
+                      {isSharing ? "Sharing" : "Share"}
                     </Text>
                   </Pressable>
 
@@ -792,9 +858,6 @@ const styles = StyleSheet.create({
   },
   viewerActionBtnPressed: {
     backgroundColor: "rgba(255,255,255,0.12)",
-  },
-  viewerActionBtnDisabled: {
-    opacity: 0.5,
   },
   viewerActionText: {
     fontFamily: "SpaceGrotesk_600SemiBold",
