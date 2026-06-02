@@ -1,16 +1,16 @@
 import {
-  Inter_300Light,
-  Inter_400Regular,
-  Inter_500Medium,
-  Inter_600SemiBold,
+    Inter_300Light,
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
 } from "@expo-google-fonts/inter";
 import {
-  SpaceGrotesk_300Light,
-  SpaceGrotesk_400Regular,
-  SpaceGrotesk_500Medium,
-  SpaceGrotesk_600SemiBold,
-  SpaceGrotesk_700Bold,
-  useFonts,
+    SpaceGrotesk_300Light,
+    SpaceGrotesk_400Regular,
+    SpaceGrotesk_500Medium,
+    SpaceGrotesk_600SemiBold,
+    SpaceGrotesk_700Bold,
+    useFonts,
 } from "@expo-google-fonts/space-grotesk";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -40,6 +40,7 @@ function RootNavigator(): React.JSX.Element | null {
           by Redirect components inside each screen. */}
       <Stack.Screen name="onboarding" />
       <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="recycle-bin" />
       <Stack.Screen
         name="delete-confirm"
         options={{

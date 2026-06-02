@@ -12,7 +12,7 @@ type ScanState = {
   scanPhaseLabel: string;
   scanResults: ScoredResult[];
   selectedIds: Set<string>;
-  pendingDeletions: ScoredResult[]; // Staged for deletion — the "undo window"
+  pendingDeletions: ScoredResult[]; // Staged for removal during the undo window
   stats: ScanStats;
   lastScanType: ScanType;
   isHydrated: boolean;
@@ -30,7 +30,7 @@ type ScanAction =
   | { type: 'REMOVE_DELETED'; deletedIds: string[] }
   | { type: 'STAGE_DELETION'; items: ScoredResult[] }
   | { type: 'UNDO_DELETION' }
-  | { type: 'COMMIT_DELETION'; stats: Partial<ScanStats> }
+  | { type: 'COMMIT_REMOVAL'; items: ScoredResult[]; totalBytes: number }
   | { type: 'UPDATE_STATS'; stats: Partial<ScanStats> }
   | { type: 'SET_SCAN_TYPE'; scanType: ScanType }
   | { type: 'CLEAR_RESULTS' };
@@ -99,9 +99,12 @@ function reducer(state: ScanState, action: ScanAction): ScanState {
 
     // ── Undo Delete Flow ──────────────────────────────────────────
 
-    // Move selected items out of scanResults into the pending "undo" queue.
-    // The UI immediately reflects the removal; the actual system delete is deferred.
+    // Move selected items out of scanResults into the pending undo queue.
+    // The actual platform removal request is deferred until Undo expires.
     case 'STAGE_DELETION': {
+      if (state.pendingDeletions.length > 0) {
+        return state;
+      }
       const stagedIds = new Set(action.items.map((r) => r.asset.id));
       const remaining = state.scanResults.filter((r) => !stagedIds.has(r.asset.id));
       const nextSelected = new Set(state.selectedIds);
@@ -122,13 +125,23 @@ function reducer(state: ScanState, action: ScanAction): ScanState {
         pendingDeletions: [],
       };
 
-    // Timer expired & MediaLibrary call succeeded — finalize stats, clear queue.
-    case 'COMMIT_DELETION':
+    // A platform removal succeeded: remove visible items and update totals atomically.
+    case 'COMMIT_REMOVAL': {
+      const removedIds = new Set(action.items.map((r) => r.asset.id));
+      const nextSelected = new Set(state.selectedIds);
+      for (const id of removedIds) nextSelected.delete(id);
       return {
         ...state,
+        scanResults: state.scanResults.filter((r) => !removedIds.has(r.asset.id)),
+        selectedIds: nextSelected,
         pendingDeletions: [],
-        stats: { ...state.stats, ...action.stats },
+        stats: {
+          ...state.stats,
+          totalDeleted: state.stats.totalDeleted + action.items.length,
+          totalMBFreed: state.stats.totalMBFreed + action.totalBytes,
+        },
       };
+    }
 
     case 'UPDATE_STATS':
       return { ...state, stats: { ...state.stats, ...action.stats } };
@@ -154,7 +167,7 @@ type ScanContextType = {
   removeDeleted: (ids: string[]) => void;
   stageDeletion: (items: ScoredResult[]) => void;
   undoDeletion: () => void;
-  commitDeletion: (stats: Partial<ScanStats>) => void;
+  commitRemoval: (items: ScoredResult[], totalBytes: number) => void;
   updateStats: (stats: Partial<ScanStats>) => void;
   clearResults: () => void;
 };
@@ -236,8 +249,8 @@ export function ScanProvider({ children }: { children: React.ReactNode }): React
     dispatch({ type: 'UNDO_DELETION' });
   }, []);
 
-  const commitDeletion = useCallback((stats: Partial<ScanStats>) => {
-    dispatch({ type: 'COMMIT_DELETION', stats });
+  const commitRemoval = useCallback((items: ScoredResult[], totalBytes: number) => {
+    dispatch({ type: 'COMMIT_REMOVAL', items, totalBytes });
   }, []);
 
   const clearResults = useCallback(() => {
@@ -257,7 +270,7 @@ export function ScanProvider({ children }: { children: React.ReactNode }): React
     removeDeleted,
     stageDeletion,
     undoDeletion,
-    commitDeletion,
+    commitRemoval,
     updateStats,
     clearResults,
   };

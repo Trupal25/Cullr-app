@@ -328,7 +328,7 @@ export default function ScanHomeScreen(): React.JSX.Element {
               />
               <Text style={styles.activityText}>
                 {lastScan
-                  ? `Scanned ${lastScan}${deletedCount > 0 ? ` • ${deletedCount} deleted` : ""}`
+                  ? `Scanned ${lastScan}${deletedCount > 0 ? ` • ${deletedCount} removed` : ""}`
                   : "No scans yet"}
               </Text>
             </Pressable>

@@ -1,5 +1,6 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   Alert,
@@ -12,17 +13,20 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Header } from "../../src/components/header";
+import { isRecycleBinAvailable } from "../../src/services/media-deletion";
 import { useScanStore } from "../../src/store/scan-store";
 import { Colors } from "../../src/theme";
 
 export default function SettingsScreen(): React.JSX.Element {
+  const router = useRouter();
   const { updateStats } = useScanStore();
   const [hapticsEnabled, setHapticsEnabled] = useState(true);
+  const recycleBinAvailable = isRecycleBinAvailable();
 
   const handleResetStats = () => {
     Alert.alert(
       "Reset stats?",
-      "This clears your scan history and saved space totals.",
+      "This clears your scan history and removal totals.",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -96,6 +100,38 @@ export default function SettingsScreen(): React.JSX.Element {
               <Text style={styles.proBadgeText}>PRO</Text>
             </View>
           </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>RECYCLE BIN</Text>
+          <Pressable
+            onPress={() => router.push("/recycle-bin")}
+            disabled={!recycleBinAvailable}
+            style={({ pressed }) => [
+              styles.settingRow,
+              pressed && styles.settingRowPressed,
+              !recycleBinAvailable && styles.settingRowDisabled,
+            ]}
+          >
+            <View style={styles.settingInfo}>
+              <MaterialIcons
+                name="delete-outline"
+                size={20}
+                color={Colors.textPrimary}
+              />
+              <View>
+                <Text style={styles.settingLabel}>Device Recycle Bin</Text>
+                <Text style={styles.settingDesc}>
+                  {recycleBinAvailable ? "Review, restore, or empty images" : "Android 11+ only"}
+                </Text>
+              </View>
+            </View>
+            <MaterialIcons
+              name="chevron-right"
+              size={22}
+              color={Colors.textMuted}
+            />
+          </Pressable>
         </View>
 
         <View style={styles.section}>
@@ -194,6 +230,9 @@ const styles = StyleSheet.create({
   },
   settingRowPressed: {
     backgroundColor: "rgba(15, 23, 42, 0.05)",
+  },
+  settingRowDisabled: {
+    opacity: 0.5,
   },
   settingInfo: {
     flexDirection: "row",

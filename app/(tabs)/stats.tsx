@@ -28,11 +28,11 @@ export default function StatsScreen(): React.JSX.Element {
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.pageHeader}>
           <Text style={styles.title}>Stats</Text>
-          <Text style={styles.subtitle}>Scans, removals, and space saved</Text>
+          <Text style={styles.subtitle}>Scans and media removed</Text>
         </View>
 
         <View style={styles.grid}>
-          {/* Storage Saved */}
+          {/* Removed media size */}
           <View style={[styles.card, styles.cardLarge]}>
             <View style={styles.cardIcon}>
               <MaterialIcons name="storage" size={24} color={Colors.primary} />
@@ -41,7 +41,7 @@ export default function StatsScreen(): React.JSX.Element {
               <Text style={styles.cardValue}>
                 {formatMB(stats.totalMBFreed)}
               </Text>
-              <Text style={styles.cardLabel}>Storage Freed</Text>
+              <Text style={styles.cardLabel}>Media Removed</Text>
             </View>
           </View>
 

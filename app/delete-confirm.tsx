@@ -8,7 +8,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   Easing,
@@ -21,13 +21,19 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  getRemovalConfirmationText,
+  getRemovalDestination,
+  removeAssetsAsync,
+  usesUndoWindow,
+} from "../src/services/media-deletion";
 import { formatMB } from "../src/services/scan-orchestrator";
 import { useScanStore } from "../src/store/scan-store";
 import { Colors } from "../src/theme";
 
 export default function DeleteConfirmScreen(): React.JSX.Element {
   const router = useRouter();
-  const { state, stageDeletion } = useScanStore();
+  const { state, stageDeletion, commitRemoval } = useScanStore();
   const [deleting, setDeleting] = useState(false);
   const translateY = useSharedValue(120);
   const sheetOpacity = useSharedValue(0);
@@ -56,6 +62,14 @@ export default function DeleteConfirmScreen(): React.JSX.Element {
     () => selectedResults.reduce((sum, r) => sum + r.asset.fileSize, 0),
     [selectedResults],
   );
+  const destination = getRemovalDestination();
+  const hasUndoWindow = usesUndoWindow();
+  const removalActionLabel =
+    destination === "android-trash"
+      ? "Move To Trash"
+      : destination === "ios-recently-deleted"
+        ? "Move to Recently Deleted"
+        : `Delete ${selectedCount}`;
 
   const closeWithAnimation = useCallback(
     (onComplete: () => void): void => {
@@ -132,16 +146,42 @@ export default function DeleteConfirmScreen(): React.JSX.Element {
     };
   });
 
+  const removeWithSystemRecovery = useCallback(async (): Promise<void> => {
+    try {
+      const success = await removeAssetsAsync(
+        selectedResults.map((item) => item.asset.id),
+      );
+
+      if (success) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        commitRemoval(selectedResults, selectedBytes);
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error &&
+        error.message.includes("until the Android app is rebuilt")
+          ? "Rebuild and reopen the Android app to use system Trash. No images were removed."
+          : "The images could not be removed. Your selection has been preserved.";
+      Alert.alert("Could not remove images", message);
+    }
+  }, [commitRemoval, selectedBytes, selectedResults]);
+
   const handleDelete = (): void => {
     if (deleting || selectedCount === 0) return;
 
     setDeleting(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
 
-    // Stage the items for deferred deletion — UndoSnackbar will handle
-    // the actual MediaLibrary call after the 6-second undo window.
-    stageDeletion(selectedResults);
-    closeWithAnimation(() => router.back());
+    if (hasUndoWindow) {
+      stageDeletion(selectedResults);
+      closeWithAnimation(() => router.back());
+      return;
+    }
+
+    closeWithAnimation(() => {
+      router.back();
+      void removeWithSystemRecovery();
+    });
   };
 
   return (
@@ -171,13 +211,13 @@ export default function DeleteConfirmScreen(): React.JSX.Element {
                 </Text>
 
                 <Text style={styles.bodyText}>
-                  Moves them to Trash. Undo stays available for 6 seconds.
+                  {getRemovalConfirmationText()}
                 </Text>
 
                 <View style={styles.statRow}>
                   <View style={styles.statChip}>
                     <Text style={styles.statText}>
-                      {formatMB(selectedBytes)} freed
+                      {formatMB(selectedBytes)} selected
                     </Text>
                   </View>
                   <View style={styles.statChip}>
@@ -196,7 +236,7 @@ export default function DeleteConfirmScreen(): React.JSX.Element {
                     ]}
                   >
                     <Text style={styles.deleteButtonText}>
-                      Delete {selectedCount}
+                      {removalActionLabel}
                     </Text>
                   </Pressable>
                   <Pressable
@@ -214,8 +254,16 @@ export default function DeleteConfirmScreen(): React.JSX.Element {
             </View>
 
             <View style={styles.statusBar}>
-              <Text style={styles.statusText}>Trash</Text>
-              <Text style={styles.statusText}>Undo: 6s</Text>
+              <Text style={styles.statusText}>
+                {destination === "android-trash"
+                  ? "Device Trash"
+                  : destination === "ios-recently-deleted"
+                    ? "Recently Deleted"
+                    : "Permanent removal"}
+              </Text>
+              <Text style={styles.statusText}>
+                {hasUndoWindow ? "Undo: 6s" : "Recovery available"}
+              </Text>
             </View>
           </Animated.View>
         </GestureDetector>

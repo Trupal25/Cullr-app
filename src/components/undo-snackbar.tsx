@@ -3,7 +3,8 @@ import { getInfoAsync } from "expo-file-system/legacy";
 import * as Haptics from "expo-haptics";
 import * as MediaLibrary from "expo-media-library";
 import React, { useCallback, useEffect, useRef } from "react";
-import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Animated, Pressable, StyleSheet, Text, View } from "react-native";
+import { removeAssetsAsync } from "../services/media-deletion";
 import { formatMB } from "../services/scan-orchestrator";
 import { useScanStore } from "../store/scan-store";
 import { Colors } from "../theme";
@@ -40,8 +41,8 @@ async function resolveAssetSize(item: ScoredResult): Promise<number> {
 }
 
 export function UndoSnackbar(): React.JSX.Element | null {
-  const { state, undoDeletion, commitDeletion } = useScanStore();
-  const { pendingDeletions, stats } = state;
+  const { state, undoDeletion, commitRemoval } = useScanStore();
+  const { pendingDeletions } = state;
 
   const progressAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(80)).current;
@@ -49,13 +50,7 @@ export function UndoSnackbar(): React.JSX.Element | null {
 
   const commitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const progressAnimRef = useRef<Animated.CompositeAnimation | null>(null);
-  const statsRef = useRef(stats);
-
   const hasPending = pendingDeletions.length > 0;
-
-  useEffect(() => {
-    statsRef.current = stats;
-  }, [stats]);
 
   useEffect(() => {
     if (!hasPending) {
@@ -109,19 +104,21 @@ export function UndoSnackbar(): React.JSX.Element | null {
         const sizes = await Promise.all(items.map(resolveAssetSize));
         const totalBytes = sizes.reduce((s, n) => s + n, 0);
         const assetIds = items.map((r) => r.asset.id);
-        const success = await MediaLibrary.deleteAssetsAsync(assetIds);
+        const success = await removeAssetsAsync(assetIds);
 
         if (success) {
-          const currentStats = statsRef.current;
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          commitDeletion({
-            totalDeleted: currentStats.totalDeleted + items.length,
-            totalMBFreed: currentStats.totalMBFreed + totalBytes,
-          });
+          commitRemoval(items, totalBytes);
         } else {
           undoDeletion();
         }
-      } catch {
+      } catch (error) {
+        const message =
+          error instanceof Error &&
+          error.message.includes("until the Android app is rebuilt")
+            ? "Rebuild and reopen the Android app to use system Trash. No images were removed."
+            : "The images could not be removed. They have been restored to your results.";
+        Alert.alert("Could not remove images", message);
         undoDeletion();
       }
     }, UNDO_DURATION_MS);
@@ -130,7 +127,7 @@ export function UndoSnackbar(): React.JSX.Element | null {
       if (commitTimerRef.current) clearTimeout(commitTimerRef.current);
       if (progressAnimRef.current) progressAnimRef.current.stop();
     };
-  }, [commitDeletion, hasPending, opacityAnim, pendingDeletions, progressAnim, slideAnim, undoDeletion]);
+  }, [commitRemoval, hasPending, opacityAnim, pendingDeletions, progressAnim, slideAnim, undoDeletion]);
 
   const handleUndo = useCallback(() => {
     if (commitTimerRef.current) clearTimeout(commitTimerRef.current);
@@ -174,10 +171,10 @@ export function UndoSnackbar(): React.JSX.Element | null {
         {/* Centre: message block */}
         <View style={styles.textBlock}>
           <Text style={styles.label} numberOfLines={1}>
-            Removed {count} image{count !== 1 ? "s" : ""}
+            Pending removal: {count} image{count !== 1 ? "s" : ""}
           </Text>
           <Text style={styles.meta}>
-            {formatMB(totalBytes)} saved
+            {formatMB(totalBytes)} pending
           </Text>
         </View>
 

@@ -41,11 +41,11 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+/modules/*/android/build/
 /test
 /.agent/
 /.agent/
 /.agents/
 /.antigravity/
 /.stitch_screens/
-
 
