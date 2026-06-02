@@ -37,7 +37,6 @@ Cullr is a mobile app that helps you free the junk in your phone by automaticall
    ```
 
 3. Run on a device/emulator
-
    - Android emulator (Android Studio)
    - Physical device with USB debugging enabled
    - Expo Go (limited, depending on native modules)
@@ -56,13 +55,18 @@ npm run reset-project
 
 ## Build with EAS (cloud)
 
-Recommended for release builds.
+Recommended for release builds. This repo has APK and AAB profiles in [eas.json](eas.json).
 
 ```bash
-npx eas build -p android
+# APK (internal preview build for testing)
+npx eas build -p android --profile preview
+
+# APK (internal distribution with production settings)
+npx eas build -p android --profile production-apk
+
 ```
 
-Follow the prompts to configure credentials and download the APK/AAB.
+Follow the prompts to configure credentials and download the artifact.
 
 ## Build an APK locally (Android)
 
