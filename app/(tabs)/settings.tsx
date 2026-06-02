@@ -180,7 +180,7 @@ export default function SettingsScreen(): React.JSX.Element {
           </Pressable>
         </View>
 
-        <Text style={styles.versionText}>Cullr v1.0.0</Text>
+        <Text style={styles.versionText}>Cullr v1.0.2</Text>
       </ScrollView>
     </SafeAreaView>
   );

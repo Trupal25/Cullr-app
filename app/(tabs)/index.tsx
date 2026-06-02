@@ -16,6 +16,8 @@ import Animated, {
   Easing,
   FadeIn,
   SlideInDown,
+  SlideInLeft,
+  SlideInRight,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
@@ -338,7 +340,7 @@ export default function ScanHomeScreen(): React.JSX.Element {
         {/* Step 1: Choose range */}
         {configStep === "range" && (
           <Animated.View
-            entering={SlideInDown.duration(350).springify()}
+            entering={SlideInDown.duration(300).springify()}
             style={styles.flowContainer}
           >
             <ScrollView
@@ -423,7 +425,7 @@ export default function ScanHomeScreen(): React.JSX.Element {
         {/* Step 2: Choose scan type */}
         {configStep === "type" && (
           <Animated.View
-            entering={SlideInDown.duration(350).springify()}
+            entering={SlideInRight.duration(100).springify()}
             style={styles.flowContainer}
           >
             <ScrollView
