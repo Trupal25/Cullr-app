@@ -114,4 +114,6 @@ cd android
 
 ## License
 
-MIT License.
+Source is viewable for portfolio purposes only. No license is granted to use, copy, modify, or redistribute this code without permission. See [LICENSE](LICENSE) for details.
+
+Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).
